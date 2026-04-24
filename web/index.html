@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web панель by ZigZiger</title>
+  <meta name="application-name" content="Web панель by ZigZiger">
+  <meta name="apple-mobile-web-app-title" content="Web панель by ZigZiger">
+  <meta name="theme-color" content="#081322">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="512x512" href="/z_icon.png">
+  <link rel="apple-touch-icon" href="/z_icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="bg-orb bg-orb--cyan"></div>
+  <div class="bg-orb bg-orb--pink"></div>
+  <div class="bg-orb bg-orb--gold"></div>
+  <div class="grid-noise"></div>
+
+  <div class="shell">
+    <header class="hero">
+      <div class="brand-card">
+        <div class="brand-card__logo">
+          <img src="/z_icon.png" alt="">
+        </div>
+        <div class="brand-card__copy">
+          <p class="eyebrow">Режиссерский web-пульт</p>
+          <h1>mopsyan_sysan</h1>
+          <p class="subtitle">Web панель by ZigZiger</p>
+          <div class="hero-tags">
+            <span class="hero-tag" id="heroSceneChip">Сцена</span>
+            <span class="hero-tag hero-tag--ghost" id="heroChatChip">Чат</span>
+            <span class="hero-tag hero-tag--signal" id="heroSignalChip">МИК</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button class="action-btn action-btn--primary" id="openOverlayBtn">Открыть сцену</button>
+        <button class="action-btn" id="copyOverlayBtn">Копировать адрес сцены</button>
+        <button class="action-btn" id="openChatBtn">Открыть чат</button>
+        <button class="action-btn" id="copyChatBtn">Копировать адрес чата</button>
+      </div>
+    </header>
+
+    <section class="stats-row">
+      <article class="stat-card stat-card--cyan">
+        <p class="stat-card__label">Чистая сцена</p>
+        <strong class="stat-card__value" id="overlayShort">ожидание</strong>
+      </article>
+      <article class="stat-card stat-card--pink">
+        <p class="stat-card__label">Локальный чат</p>
+        <strong class="stat-card__value" id="chatShort">ожидание</strong>
+      </article>
+      <article class="stat-card stat-card--gold">
+        <p class="stat-card__label">Уровень сигнала</p>
+        <strong class="stat-card__value" id="heroSignalStat">МИК ВЫКЛ</strong>
+      </article>
+      <article class="stat-card stat-card--mint">
+        <p class="stat-card__label">Формат сцены</p>
+        <strong class="stat-card__value" id="sceneSizeStat">1280 × 720</strong>
+      </article>
+    </section>
+
+    <main class="layout">
+      <section class="control-stack">
+        <article class="deck deck--featured">
+          <div class="deck__art deck__art--featured"></div>
+          <div class="deck__head">
+            <div>
+              <p class="eyebrow">Режим эфира</p>
+              <h2>Пак и момент</h2>
+            </div>
+            <div class="deck-badge">web</div>
+          </div>
+
+          <div class="field-grid field-grid--triple">
+            <label class="field">
+              <span>Интернет-пак</span>
+              <select data-setting="internetPack" id="internetPack"></select>
+            </label>
+            <label class="field">
+              <span>Момент эфира</span>
+              <select data-setting="streamMoment" id="streamMoment"></select>
+            </label>
+            <label class="field">
+              <span>Формат</span>
+              <select data-setting="presetLabel" id="presetLabel"></select>
+            </label>
+          </div>
+
+          <p class="support-text" id="presetNote">Подбираем лучший пакет.</p>
+        </article>
+
+        <article class="deck">
+          <div class="deck__head">
+            <div>
+              <p class="eyebrow">Персонаж</p>
+              <h2>Кадры и фон</h2>
+            </div>
+          </div>
+          <div class="field-stack">
+            <label class="field">
+              <span>Фото 1 — тишина</span>
+              <input type="text" data-setting="imageIdle" id="imageIdle" placeholder="Путь к PNG">
+            </label>
+            <label class="field">
+              <span>Фото 2 — речь</span>
+              <input type="text" data-setting="imageTalkA" id="imageTalkA" placeholder="Путь к PNG">
+            </label>
+            <label class="field">
+              <span>Фото 3 — речь</span>
+              <input type="text" data-setting="imageTalkB" id="imageTalkB" placeholder="Путь к PNG">
+            </label>
+            <label class="field">
+              <span>Фон-картинка</span>
+              <input type="text" data-setting="backgroundPath" id="backgroundPath" placeholder="Опционально">
+            </label>
+          </div>
+        </article>
+
+        <article class="deck">
+          <div class="deck__head">
+            <div>
+              <p class="eyebrow">Сцена</p>
+              <h2>Композиция</h2>
+            </div>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Арт-режим</span>
+              <select data-setting="sceneStyle" id="sceneStyle"></select>
+            </label>
+            <label class="field">
+              <span>Позиция</span>
+              <select data-setting="anchorLabel" id="anchorLabel"></select>
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Режим фона</span>
+              <select data-setting="bgMode" id="bgMode">
+                <option value="transparent">Прозрачный</option>
+                <option value="color">Цветной фон</option>
+                <option value="image">Картинка</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Цвет фона</span>
+              <input type="color" data-setting="bgColor" id="bgColor">
+            </label>
+          </div>
+
+          <div class="slider-group">
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Масштаб</span>
+                <strong id="scalePercentValue">58%</strong>
+              </div>
+              <input type="range" min="18" max="90" step="1" data-setting="scalePercent" id="scalePercent">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Сдвиг X</span>
+                <strong id="marginXValue">26 px</strong>
+              </div>
+              <input type="range" min="0" max="280" step="1" data-setting="marginX" id="marginX">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Сдвиг Y</span>
+                <strong id="marginYValue">18 px</strong>
+              </div>
+              <input type="range" min="0" max="220" step="1" data-setting="marginY" id="marginY">
+            </label>
+          </div>
+
+          <div class="toggle-grid">
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="showSceneFrame" id="showSceneFrame">
+              <div>
+                <strong>Контур сцены</strong>
+                <span>Внешняя рамка вокруг вывода</span>
+              </div>
+            </label>
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="showSceneLabel" id="showSceneLabel">
+              <div>
+                <strong>Плашка пакета и момента</strong>
+                <span>Верхняя карточка с названием режима</span>
+              </div>
+            </label>
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="showSceneRibbon" id="showSceneRibbon">
+              <div>
+                <strong>Сигнальная лента</strong>
+                <span>Нижняя полоска с аудио-пульсом</span>
+              </div>
+            </label>
+          </div>
+        </article>
+
+        <article class="deck">
+          <div class="deck__head">
+            <div>
+              <p class="eyebrow">Чат Twitch</p>
+              <h2>Подключение и стиль</h2>
+            </div>
+          </div>
+
+          <div class="field-stack">
+            <label class="field">
+              <span>Канал или ссылка</span>
+              <input type="text" data-setting="chatUrl" id="chatUrl" placeholder="@kanal или twitch.tv/kanal">
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Логин Twitch</span>
+              <input type="text" data-setting="chatAuthUser" id="chatAuthUser" placeholder="Опционально">
+            </label>
+            <label class="field">
+              <span>OAuth token</span>
+              <input type="password" data-setting="chatAuthToken" id="chatAuthToken" placeholder="oauth:...">
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Стиль чата</span>
+              <select data-setting="chatStyle" id="chatStyle"></select>
+            </label>
+            <label class="field">
+              <span>Сторона чата</span>
+              <select data-setting="chatSide" id="chatSide"></select>
+            </label>
+          </div>
+
+          <div class="slider-group">
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Ширина панели чата</span>
+                <strong id="chatWidthPercentValue">31%</strong>
+              </div>
+              <input type="range" min="24" max="42" step="1" data-setting="chatWidthPercent" id="chatWidthPercent">
+            </label>
+          </div>
+
+          <div class="toggle-grid toggle-grid--single">
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="chatCompactMode" id="chatCompactMode">
+              <div>
+                <strong>Компактный чат</strong>
+                <span>Чистый вывод без лишней шапки и футера</span>
+              </div>
+            </label>
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="chatRevealOnly" id="chatRevealOnly">
+              <div>
+                <strong>Показывать только при сообщениях</strong>
+                <span>Чат скрыт в idle и появляется только когда прилетает живое сообщение</span>
+              </div>
+            </label>
+          </div>
+
+          <p class="support-text" id="chatStatusText">Вставь канал Twitch, ссылку на канал или чат Twitch.</p>
+        </article>
+
+        <article class="deck">
+          <div class="deck__head">
+            <div>
+              <p class="eyebrow">Аудио</p>
+              <h2>Микрофон и чувствительность</h2>
+            </div>
+            <div class="deck-actions">
+              <button class="mini-btn" id="refreshDevicesBtn">Обновить</button>
+            </div>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Устройство</span>
+              <select data-setting="deviceLabel" id="deviceLabel"></select>
+            </label>
+            <div class="field field--actions">
+              <span>Управление</span>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="startAudioBtn">Старт</button>
+                <button class="mini-btn" id="stopAudioBtn">Стоп</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="slider-group">
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Порог речи</span>
+                <strong id="thresholdValue">12</strong>
+              </div>
+              <input type="range" min="1" max="50" step="1" data-setting="threshold" id="threshold">
+            </label>
+          </div>
+
+          <div class="meter-shell">
+            <div class="meter-shell__head">
+              <span>Текущий уровень</span>
+              <strong id="micLevelValue">0%</strong>
+            </div>
+            <div class="meter">
+              <div class="meter__fill" id="micLevelFill"></div>
+            </div>
+            <div class="pulse-bars" id="pulseBars"></div>
+          </div>
+
+          <p class="support-text" id="audioStatusText">Микрофон пока остановлен.</p>
+        </article>
+      </section>
+
+      <section class="preview-stack">
+        <article class="deck deck--preview">
+          <div class="deck__art deck__art--preview"></div>
+          <div class="deck__head deck__head--spread">
+            <div>
+              <p class="eyebrow">Живой монитор</p>
+              <h2>Предпросмотр web-проекта</h2>
+            </div>
+            <div class="preview-route-chips">
+              <div class="route-chip">
+                <span>Чистая сцена</span>
+                <strong id="overlayRouteChip">ожидание</strong>
+              </div>
+              <div class="route-chip route-chip--pink">
+                <span>Чат</span>
+                <strong id="chatRouteChip">ожидание</strong>
+              </div>
+            </div>
+          </div>
+
+          <p class="deck-lead" id="captureHint">Подготавливаем сцену.</p>
+          <p class="deck-meta" id="sceneMeta">Сцена готовится.</p>
+
+          <div class="preview-frame">
+            <div class="preview-checker"></div>
+            <div class="preview-beam preview-beam--left"></div>
+            <div class="preview-beam preview-beam--right"></div>
+            <img id="frameImage" alt="preview">
+            <div class="preview-overlay">
+              <div class="preview-pill" id="heroScenePill">Сцена</div>
+              <div class="preview-pill preview-pill--ghost" id="heroChatPill">Чат</div>
+              <div class="preview-pill preview-pill--gold" id="heroSignalPill">МИК</div>
+            </div>
+          </div>
+
+          <div class="route-grid">
+            <div class="route-card route-card--cyan">
+              <p class="eyebrow">Адрес сцены</p>
+              <h3>Чистый Browser Source</h3>
+              <input class="route-input" id="overlayRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyOverlayRouteBtn">Копировать</button>
+                <button class="mini-btn" id="openOverlayRouteBtn">Открыть</button>
+              </div>
+            </div>
+            <div class="route-card route-card--pink">
+              <p class="eyebrow">Адрес чата</p>
+              <h3>Chat Source</h3>
+              <input class="route-input" id="chatRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyChatRouteBtn">Копировать</button>
+                <button class="mini-btn" id="openChatRouteBtn">Открыть</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="deck deck--support">
+          <div class="support-grid">
+            <section class="support-card">
+              <p class="eyebrow">Подсказка</p>
+              <h2>OBS и маршруты</h2>
+              <pre id="obsHelpText"></pre>
+            </section>
+            <section class="support-card">
+              <p class="eyebrow">Состояние</p>
+              <h2>Что происходит сейчас</h2>
+              <ul class="status-list">
+                <li id="statusAudioLine">Микрофон пока остановлен.</li>
+                <li id="statusChatLine">Чат не подключен.</li>
+                <li id="statusErrorsLine">Ошибок нет.</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

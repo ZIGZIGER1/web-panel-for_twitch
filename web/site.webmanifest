@@ -1,0 +1,22 @@
+{
+  "name": "Web панель by ZigZiger",
+  "short_name": "ZigZiger",
+  "description": "Локальная web-панель для сцены, персонажа и Twitch-чата.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#081322",
+  "theme_color": "#081322",
+  "icons": [
+    {
+      "src": "/z_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 48x48 32x32 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
