@@ -16,7 +16,6 @@ from chat_overlay import build_chat_config, build_chat_overlay_html, build_overl
 from constants import (
     APP_TITLE,
     CHAT_SIDE_OPTIONS,
-    CHAT_STYLE_OPTIONS,
     HANG_SECONDS,
     INTERNET_PRESET_OPTIONS,
     INTERNET_PRESET_PACKS,
@@ -334,7 +333,7 @@ class WebRuntime:
         self.show_scene_label = False
         self.show_scene_ribbon = False
 
-        self.chat_style = "Аврора"
+        self.chat_style = "Ручной"
         self.chat_side = "Справа"
         self.chat_width_percent = 31.0
         self.chat_url = ""
@@ -342,6 +341,22 @@ class WebRuntime:
         self.chat_auth_token = ""
         self.chat_compact_mode = True
         self.chat_reveal_only = True
+        self.chat_font_family = 'Manrope, "Segoe UI", sans-serif'
+        self.chat_title_font_family = 'Unbounded, Manrope, sans-serif'
+        self.chat_accent = "#74E7FF"
+        self.chat_accent2 = "#FF66C7"
+        self.chat_accent3 = "#FFC970"
+        self.chat_text_color = "#F5FBFF"
+        self.chat_muted_color = "#B4C7DD"
+        self.chat_panel_color = "#132033"
+        self.chat_panel_opacity = 62.0
+        self.chat_panel_color_secondary = "#1C2A42"
+        self.chat_panel_secondary_opacity = 92.0
+        self.chat_message_color = "#18263A"
+        self.chat_message_opacity = 88.0
+        self.chat_message_size = 20.0
+        self.chat_shell_radius = 34.0
+        self.chat_bubble_radius = 24.0
         self.tune_player_url = ""
         self.tune_queue_url = ""
         self.tune_dock_url = ""
@@ -514,7 +529,6 @@ class WebRuntime:
             pack = INTERNET_PRESET_PACKS.get(self.internet_pack, INTERNET_PRESET_PACKS["Ночной грид"])
             settings = pack["moments"].get(self.stream_moment, pack["moments"]["Геймплей"])
             self.scene_style = str(pack["scene_style"])
-            self.chat_style = str(pack["chat_style"])
             self.anchor_label = str(settings["anchor"])
             self.scale_percent = float(settings["scale"])
             self.margin_x = float(settings["margin_x"])
@@ -536,7 +550,6 @@ class WebRuntime:
             auth_token = self.chat_auth_token.strip()
 
             config = build_chat_config(
-                style_name=self.chat_style.strip() or "Аврора",
                 side_name=self.chat_side.strip() or "Справа",
                 width_percent=width_percent,
                 twitch_channel=twitch_channel,
@@ -544,6 +557,22 @@ class WebRuntime:
                 irc_token=auth_token,
                 compact_mode=self.chat_compact_mode,
                 reveal_only=self.chat_reveal_only,
+                font_family=self.chat_font_family,
+                title_font_family=self.chat_title_font_family,
+                accent_color=self.chat_accent,
+                accent_color_2=self.chat_accent2,
+                accent_color_3=self.chat_accent3,
+                text_color=self.chat_text_color,
+                muted_color=self.chat_muted_color,
+                panel_color=self.chat_panel_color,
+                panel_opacity=self.chat_panel_opacity,
+                panel_color_secondary=self.chat_panel_color_secondary,
+                panel_secondary_opacity=self.chat_panel_secondary_opacity,
+                message_color=self.chat_message_color,
+                message_opacity=self.chat_message_opacity,
+                message_size_px=self.chat_message_size,
+                shell_radius_px=self.chat_shell_radius,
+                bubble_radius_px=self.chat_bubble_radius,
             )
 
             self.chat_overlay_config_cache = config
@@ -628,7 +657,6 @@ class WebRuntime:
                 "internetPack": self.internet_pack,
                 "streamMoment": self.stream_moment,
                 "sceneStyle": self.scene_style,
-                "chatStyle": self.chat_style,
                 "chatSide": self.chat_side,
                 "bgMode": self.bg_mode,
                 "bgColor": self.bg_color,
@@ -645,6 +673,22 @@ class WebRuntime:
                 "chatUrl": self.chat_url,
                 "chatAuthUser": self.chat_auth_user,
                 "chatAuthToken": self.chat_auth_token,
+                "chatFontFamily": self.chat_font_family,
+                "chatTitleFontFamily": self.chat_title_font_family,
+                "chatAccent": self.chat_accent,
+                "chatAccent2": self.chat_accent2,
+                "chatAccent3": self.chat_accent3,
+                "chatTextColor": self.chat_text_color,
+                "chatMutedColor": self.chat_muted_color,
+                "chatPanelColor": self.chat_panel_color,
+                "chatPanelOpacity": round(self.chat_panel_opacity, 1),
+                "chatPanelColorSecondary": self.chat_panel_color_secondary,
+                "chatPanelSecondaryOpacity": round(self.chat_panel_secondary_opacity, 1),
+                "chatMessageColor": self.chat_message_color,
+                "chatMessageOpacity": round(self.chat_message_opacity, 1),
+                "chatMessageSize": round(self.chat_message_size, 1),
+                "chatShellRadius": round(self.chat_shell_radius, 1),
+                "chatBubbleRadius": round(self.chat_bubble_radius, 1),
                 "tunePlayerUrl": self.tune_player_url,
                 "tuneQueueUrl": self.tune_queue_url,
                 "tuneDockUrl": self.tune_dock_url,
@@ -763,7 +807,7 @@ class WebRuntime:
             self.capture_hint = f"{capture_text} Активный момент: {self.stream_moment} · Пак: {self.internet_pack}."
             self.hero_scene = f"{self.internet_pack} · {self.stream_moment}"
             self.scene_meta = (
-                f"Стиль: {self.scene_style} · Чат: {self.chat_style} · Режим: {mode_label} · Сцена: {width} x {height}"
+                f"Стиль: {self.scene_style} · Чат: ручная тема · Режим: {mode_label} · Сцена: {width} x {height}"
             )
             help_lines = [
                 "1. Добавь Browser Source с адресом сцены."
@@ -910,9 +954,6 @@ class WebRuntime:
             if "sceneStyle" in payload and str(payload["sceneStyle"]) in SCENE_STYLE_OPTIONS:
                 self.scene_style = str(payload["sceneStyle"])
                 recalc_guidance = True
-            if "chatStyle" in payload and str(payload["chatStyle"]) in CHAT_STYLE_OPTIONS:
-                self.chat_style = str(payload["chatStyle"])
-                recalc_guidance = True
             if "chatSide" in payload and str(payload["chatSide"]) in CHAT_SIDE_OPTIONS:
                 self.chat_side = str(payload["chatSide"])
             if "bgMode" in payload and str(payload["bgMode"]) in {"transparent", "color", "image"}:
@@ -947,6 +988,38 @@ class WebRuntime:
                 self.chat_auth_user = str(payload["chatAuthUser"]).strip()
             if "chatAuthToken" in payload:
                 self.chat_auth_token = str(payload["chatAuthToken"]).strip()
+            if "chatFontFamily" in payload:
+                self.chat_font_family = str(payload["chatFontFamily"]).strip()[:120] or self.chat_font_family
+            if "chatTitleFontFamily" in payload:
+                self.chat_title_font_family = str(payload["chatTitleFontFamily"]).strip()[:120] or self.chat_title_font_family
+            if "chatAccent" in payload:
+                self.chat_accent = str(payload["chatAccent"]).strip() or self.chat_accent
+            if "chatAccent2" in payload:
+                self.chat_accent2 = str(payload["chatAccent2"]).strip() or self.chat_accent2
+            if "chatAccent3" in payload:
+                self.chat_accent3 = str(payload["chatAccent3"]).strip() or self.chat_accent3
+            if "chatTextColor" in payload:
+                self.chat_text_color = str(payload["chatTextColor"]).strip() or self.chat_text_color
+            if "chatMutedColor" in payload:
+                self.chat_muted_color = str(payload["chatMutedColor"]).strip() or self.chat_muted_color
+            if "chatPanelColor" in payload:
+                self.chat_panel_color = str(payload["chatPanelColor"]).strip() or self.chat_panel_color
+            if "chatPanelOpacity" in payload:
+                self.chat_panel_opacity = clamp(float(payload["chatPanelOpacity"]), 10.0, 100.0)
+            if "chatPanelColorSecondary" in payload:
+                self.chat_panel_color_secondary = str(payload["chatPanelColorSecondary"]).strip() or self.chat_panel_color_secondary
+            if "chatPanelSecondaryOpacity" in payload:
+                self.chat_panel_secondary_opacity = clamp(float(payload["chatPanelSecondaryOpacity"]), 10.0, 100.0)
+            if "chatMessageColor" in payload:
+                self.chat_message_color = str(payload["chatMessageColor"]).strip() or self.chat_message_color
+            if "chatMessageOpacity" in payload:
+                self.chat_message_opacity = clamp(float(payload["chatMessageOpacity"]), 10.0, 100.0)
+            if "chatMessageSize" in payload:
+                self.chat_message_size = clamp(float(payload["chatMessageSize"]), 14.0, 32.0)
+            if "chatShellRadius" in payload:
+                self.chat_shell_radius = clamp(float(payload["chatShellRadius"]), 20.0, 44.0)
+            if "chatBubbleRadius" in payload:
+                self.chat_bubble_radius = clamp(float(payload["chatBubbleRadius"]), 16.0, 36.0)
             if "tunePlayerUrl" in payload:
                 raw = str(payload["tunePlayerUrl"]).strip()
                 normalized = normalize_tune2live_url(raw)
@@ -1004,7 +1077,7 @@ class WebRuntime:
                 self.tune_status = tune_validation_error
         if media_changed:
             self.reload_media(show_errors=True)
-        if recalc_guidance or "chatUrl" in payload or "chatStyle" in payload or "bgMode" in payload or "tunePlayerUrl" in payload or "tuneQueueUrl" in payload or "tuneDockUrl" in payload or "tuneAutoMode" in payload or "tuneAutoThreshold" in payload or "tuneAutoFloor" in payload or "tuneAutoReleaseMs" in payload or "tuneAutoPlayer" in payload or "tuneAutoQueue" in payload or "tuneAutoDock" in payload:
+        if recalc_guidance or "chatUrl" in payload or "bgMode" in payload or "tunePlayerUrl" in payload or "tuneQueueUrl" in payload or "tuneDockUrl" in payload or "tuneAutoMode" in payload or "tuneAutoThreshold" in payload or "tuneAutoFloor" in payload or "tuneAutoReleaseMs" in payload or "tuneAutoPlayer" in payload or "tuneAutoQueue" in payload or "tuneAutoDock" in payload:
             self.update_guidance()
         if save:
             self.save_settings()
@@ -1073,7 +1146,6 @@ class WebRuntime:
                     "internetPack": self.internet_pack,
                     "streamMoment": self.stream_moment,
                     "presetNote": self.preset_note,
-                    "chatStyle": self.chat_style,
                     "chatSide": self.chat_side,
                     "chatWidthPercent": round(self.chat_width_percent, 1),
                     "chatCompactMode": self.chat_compact_mode,
@@ -1081,6 +1153,22 @@ class WebRuntime:
                     "chatUrl": self.chat_url,
                     "chatAuthUser": self.chat_auth_user,
                     "chatAuthToken": self.chat_auth_token,
+                    "chatFontFamily": self.chat_font_family,
+                    "chatTitleFontFamily": self.chat_title_font_family,
+                    "chatAccent": self.chat_accent,
+                    "chatAccent2": self.chat_accent2,
+                    "chatAccent3": self.chat_accent3,
+                    "chatTextColor": self.chat_text_color,
+                    "chatMutedColor": self.chat_muted_color,
+                    "chatPanelColor": self.chat_panel_color,
+                    "chatPanelOpacity": round(self.chat_panel_opacity, 1),
+                    "chatPanelColorSecondary": self.chat_panel_color_secondary,
+                    "chatPanelSecondaryOpacity": round(self.chat_panel_secondary_opacity, 1),
+                    "chatMessageColor": self.chat_message_color,
+                    "chatMessageOpacity": round(self.chat_message_opacity, 1),
+                    "chatMessageSize": round(self.chat_message_size, 1),
+                    "chatShellRadius": round(self.chat_shell_radius, 1),
+                    "chatBubbleRadius": round(self.chat_bubble_radius, 1),
                     "tunePlayerUrl": self.tune_player_url,
                     "tuneQueueUrl": self.tune_queue_url,
                     "tuneDockUrl": self.tune_dock_url,
@@ -1102,7 +1190,6 @@ class WebRuntime:
                     "sceneStyles": list(SCENE_STYLE_OPTIONS),
                     "packs": list(INTERNET_PRESET_OPTIONS),
                     "moments": list(STREAM_MOMENT_OPTIONS),
-                    "chatStyles": list(CHAT_STYLE_OPTIONS),
                     "chatSides": list(CHAT_SIDE_OPTIONS),
                     "anchors": ["Справа снизу", "Слева снизу", "По центру"],
                 },

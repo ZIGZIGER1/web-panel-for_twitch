@@ -382,27 +382,39 @@ pre {
   padding: 22px;
 }
 
+.deck > :not(.deck__art) {
+  position: relative;
+  z-index: 1;
+}
+
 .deck__art {
-  height: 94px;
-  margin: -4px -4px 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: absolute;
+  inset: 0 0 auto;
+  height: 180px;
+  margin: 0;
+  border-radius: 0 0 34px 34px;
   background:
     linear-gradient(110deg, rgba(8, 14, 27, 0.4), rgba(8, 14, 27, 0.82)),
     url("/assets/ui/desktop_header_texture.png") center/cover no-repeat;
-  opacity: 0.85;
+  opacity: 0.44;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.82) 52%, transparent 100%);
+  pointer-events: none;
 }
 
 .deck__art--featured {
+  height: 220px;
   background:
     linear-gradient(90deg, rgba(7, 18, 29, 0.3), rgba(12, 19, 34, 0.75)),
     url("/assets/ui/desktop_sidebar_texture.png") center/cover no-repeat;
+  opacity: 0.54;
 }
 
 .deck__art--preview {
+  height: 190px;
   background:
     linear-gradient(110deg, rgba(8, 14, 27, 0.3), rgba(12, 19, 34, 0.75)),
     url("/assets/ui/desktop_app_wallpaper.png") center/cover no-repeat;
+  opacity: 0.5;
 }
 
 .deck__head {
@@ -443,15 +455,19 @@ pre {
 
 .music-grid {
   margin-top: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .toggle-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .toggle-grid--single {
   grid-template-columns: 1fr;
+}
+
+.toggle-grid:not(.toggle-grid--single) > .toggle-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .field {
@@ -464,6 +480,7 @@ pre {
   align-items: start;
   gap: 12px;
   padding: 16px;
+  min-height: 148px;
   border-radius: 18px;
   background: rgba(10, 16, 27, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -471,9 +488,9 @@ pre {
 }
 
 .toggle-card input {
-  margin-top: 3px;
-  width: 18px;
-  height: 18px;
+  margin-top: 5px;
+  width: 20px;
+  height: 20px;
   accent-color: var(--cyan);
 }
 
@@ -517,7 +534,19 @@ pre {
 }
 
 input[type="color"] {
-  padding: 8px;
+  padding: 4px;
+  min-height: 52px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 6px;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 12px;
 }
 
 .field--actions {
@@ -580,7 +609,7 @@ input[type="color"] {
 
 .preview-frame {
   position: relative;
-  min-height: 560px;
+  min-height: clamp(320px, 45vh, 520px);
   margin-top: 18px;
   border-radius: 30px;
   overflow: hidden;
@@ -589,7 +618,7 @@ input[type="color"] {
 }
 
 .preview-frame--embed {
-  min-height: 420px;
+  min-height: 380px;
   padding: 16px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
@@ -690,6 +719,10 @@ input[type="color"] {
   overflow: hidden;
 }
 
+.music-card:last-child {
+  grid-column: 1 / -1;
+}
+
 .music-card::before {
   content: "";
   position: absolute;
@@ -697,6 +730,16 @@ input[type="color"] {
   height: 3px;
   background: linear-gradient(90deg, var(--mint), var(--cyan), var(--pink));
   opacity: 0.9;
+}
+
+.music-card .inline-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.music-card h3 {
+  min-height: 3.4rem;
 }
 
 .route-input {
@@ -770,10 +813,6 @@ input[type="color"] {
 @media (max-width: 1480px) {
   .layout {
     grid-template-columns: 460px minmax(0, 1fr);
-  }
-
-  .preview-frame {
-    min-height: 500px;
   }
 }
 

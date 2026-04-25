@@ -1,136 +1,47 @@
 from __future__ import annotations
 
 import json
+import re
 
 from constants import APP_TITLE, OVERLAY_REFRESH_MS
 
 
-def chat_palette(style_name: str) -> dict[str, str]:
-    palettes = {
-        "Аврора": {
-            "style_key": "aurora",
-            "accent": "#8EF7D4",
-            "accent2": "#8EA8FF",
-            "accent3": "#E28EFF",
-            "panel": "rgba(7, 16, 26, 0.58)",
-            "panel2": "rgba(14, 29, 41, 0.92)",
-            "panel3": "rgba(19, 36, 48, 0.82)",
-            "text": "#F5FBFF",
-            "muted": "#B4C7DD",
-            "shadow": "rgba(88, 218, 190, 0.22)",
-            "line": "rgba(142, 247, 212, 0.26)",
-        },
-        "Неон": {
-            "style_key": "neon",
-            "accent": "#FF5F90",
-            "accent2": "#8A82FF",
-            "accent3": "#FFBE63",
-            "panel": "rgba(10, 12, 20, 0.58)",
-            "panel2": "rgba(18, 20, 32, 0.92)",
-            "panel3": "rgba(22, 18, 40, 0.82)",
-            "text": "#FAF7FF",
-            "muted": "#C9BADB",
-            "shadow": "rgba(255, 95, 144, 0.24)",
-            "line": "rgba(138, 130, 255, 0.24)",
-        },
-        "Стекло": {
-            "style_key": "glass",
-            "accent": "#77E4FF",
-            "accent2": "#92B0FF",
-            "accent3": "#C7F8FF",
-            "panel": "rgba(10, 18, 28, 0.46)",
-            "panel2": "rgba(23, 33, 44, 0.82)",
-            "panel3": "rgba(26, 40, 56, 0.72)",
-            "text": "#F3FAFF",
-            "muted": "#B8CBE0",
-            "shadow": "rgba(112, 200, 255, 0.22)",
-            "line": "rgba(119, 228, 255, 0.20)",
-        },
-        "Эмбер": {
-            "style_key": "ember",
-            "accent": "#FF8B67",
-            "accent2": "#FFC36D",
-            "accent3": "#FF6B8F",
-            "panel": "rgba(18, 11, 10, 0.60)",
-            "panel2": "rgba(34, 20, 18, 0.90)",
-            "panel3": "rgba(42, 24, 20, 0.82)",
-            "text": "#FFF5EE",
-            "muted": "#E4C9BB",
-            "shadow": "rgba(255, 139, 103, 0.24)",
-            "line": "rgba(255, 195, 109, 0.18)",
-        },
-        "Нуар": {
-            "style_key": "noir",
-            "accent": "#F0D596",
-            "accent2": "#8EB8FF",
-            "accent3": "#F28D8D",
-            "panel": "rgba(12, 13, 18, 0.72)",
-            "panel2": "rgba(18, 20, 26, 0.96)",
-            "panel3": "rgba(25, 28, 35, 0.92)",
-            "text": "#F8F4EE",
-            "muted": "#C2BCC0",
-            "shadow": "rgba(240, 213, 150, 0.16)",
-            "line": "rgba(240, 213, 150, 0.16)",
-        },
-        "Найт-грид": {
-            "style_key": "nightgrid",
-            "accent": "#69F2FF",
-            "accent2": "#FF66C1",
-            "accent3": "#9F8BFF",
-            "panel": "rgba(8, 12, 24, 0.62)",
-            "panel2": "rgba(14, 18, 34, 0.94)",
-            "panel3": "rgba(17, 24, 42, 0.84)",
-            "text": "#F7FAFF",
-            "muted": "#B2C0E0",
-            "shadow": "rgba(92, 233, 255, 0.20)",
-            "line": "rgba(105, 242, 255, 0.22)",
-        },
-        "Лаунж": {
-            "style_key": "lounge",
-            "accent": "#7EF2C7",
-            "accent2": "#FFD07D",
-            "accent3": "#8AB8FF",
-            "panel": "rgba(8, 23, 32, 0.56)",
-            "panel2": "rgba(16, 33, 45, 0.90)",
-            "panel3": "rgba(21, 40, 54, 0.82)",
-            "text": "#F6FCFF",
-            "muted": "#B7CAD9",
-            "shadow": "rgba(126, 242, 199, 0.18)",
-            "line": "rgba(255, 208, 125, 0.18)",
-        },
-        "Пейпер": {
-            "style_key": "paper",
-            "accent": "#C66F53",
-            "accent2": "#5B8A80",
-            "accent3": "#E5B56C",
-            "panel": "rgba(248, 240, 226, 0.84)",
-            "panel2": "rgba(239, 226, 208, 0.96)",
-            "panel3": "rgba(229, 214, 194, 0.94)",
-            "text": "#43342C",
-            "muted": "#7D695C",
-            "shadow": "rgba(102, 72, 55, 0.10)",
-            "line": "rgba(127, 98, 84, 0.16)",
-        },
-        "Арена": {
-            "style_key": "arena",
-            "accent": "#FF6767",
-            "accent2": "#58DAFF",
-            "accent3": "#FFD96E",
-            "panel": "rgba(12, 15, 24, 0.68)",
-            "panel2": "rgba(18, 23, 35, 0.96)",
-            "panel3": "rgba(21, 28, 42, 0.88)",
-            "text": "#FAFBFF",
-            "muted": "#B6C0D2",
-            "shadow": "rgba(255, 103, 103, 0.16)",
-            "line": "rgba(88, 218, 255, 0.18)",
-        },
-    }
-    return dict(palettes.get(style_name, palettes["Аврора"]))
+HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$")
+
+
+def safe_hex_color(value: object, fallback: str) -> str:
+    candidate = str(value or "").strip()
+    if HEX_COLOR_RE.fullmatch(candidate):
+        return candidate
+    return fallback
+
+
+def safe_font_stack(value: object, fallback: str) -> str:
+    cleaned = " ".join(str(value or "").strip().split())
+    return cleaned[:120] if cleaned else fallback
+
+
+def clamp_float(value: object, minimum: float, maximum: float, fallback: float) -> float:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return max(minimum, min(maximum, numeric))
+
+
+def rgba_from_hex(value: object, alpha: object, fallback: str) -> str:
+    color = safe_hex_color(value, fallback).lstrip("#")
+    if len(color) == 3:
+        color = "".join(ch * 2 for ch in color)
+    red = int(color[0:2], 16)
+    green = int(color[2:4], 16)
+    blue = int(color[4:6], 16)
+    opacity = clamp_float(alpha, 0.0, 100.0, 100.0) / 100.0
+    return f"rgba({red}, {green}, {blue}, {opacity:.3f})"
 
 
 def build_chat_config(
     *,
-    style_name: str,
     side_name: str,
     width_percent: float,
     twitch_channel: str,
@@ -138,8 +49,23 @@ def build_chat_config(
     irc_token: str,
     compact_mode: bool = False,
     reveal_only: bool = True,
+    font_family: str = "",
+    title_font_family: str = "",
+    accent_color: str = "#74E7FF",
+    accent_color_2: str = "#FF66C7",
+    accent_color_3: str = "#FFC970",
+    text_color: str = "#F5FBFF",
+    muted_color: str = "#B4C7DD",
+    panel_color: str = "#132033",
+    panel_opacity: float = 62.0,
+    panel_color_secondary: str = "#1C2A42",
+    panel_secondary_opacity: float = 92.0,
+    message_color: str = "#18263A",
+    message_opacity: float = 88.0,
+    message_size_px: float = 20.0,
+    shell_radius_px: float = 34.0,
+    bubble_radius_px: float = 24.0,
 ) -> dict[str, object]:
-    palette = chat_palette(style_name)
     side_key = "left" if side_name == "Слева" else "right"
 
     username = irc_username.strip().lower()
@@ -149,13 +75,42 @@ def build_chat_config(
 
     auth_mode = "token" if username and token else "anonymous"
     subtitle = f"Twitch • {twitch_channel}" if twitch_channel else "Ожидание Twitch-канала"
+    accent = safe_hex_color(accent_color, "#74E7FF")
+    accent2 = safe_hex_color(accent_color_2, "#FF66C7")
+    accent3 = safe_hex_color(accent_color_3, "#FFC970")
+    text = safe_hex_color(text_color, "#F5FBFF")
+    muted = safe_hex_color(muted_color, "#B4C7DD")
+    panel = rgba_from_hex(panel_color, panel_opacity, "#132033")
+    panel2 = rgba_from_hex(panel_color_secondary, panel_secondary_opacity, "#1C2A42")
+    message_fill = rgba_from_hex(message_color, message_opacity, "#18263A")
+    font_stack = safe_font_stack(font_family, '"Manrope", "Segoe UI", sans-serif')
+    title_font_stack = safe_font_stack(title_font_family, '"Unbounded", "Manrope", sans-serif')
+    message_size = int(round(clamp_float(message_size_px, 14.0, 32.0, 20.0)))
+    shell_radius = int(round(clamp_float(shell_radius_px, 20.0, 44.0, 34.0)))
+    bubble_radius = int(round(clamp_float(bubble_radius_px, 16.0, 36.0, 24.0)))
 
     return {
-        **palette,
-        "style_name": style_name,
+        "style_key": "custom",
+        "style_name": "Ручной",
         "side_name": side_name,
         "side_key": side_key,
         "panel_width_percent": round(width_percent, 1),
+        "font_family": font_stack,
+        "title_font_family": title_font_stack,
+        "accent": accent,
+        "accent2": accent2,
+        "accent3": accent3,
+        "panel": panel,
+        "panel2": panel2,
+        "panel3": message_fill,
+        "message_fill": message_fill,
+        "text": text,
+        "muted": muted,
+        "shadow": rgba_from_hex(accent2, 22.0, accent2),
+        "line": rgba_from_hex(accent, 24.0, accent),
+        "message_size": f"{message_size}px",
+        "shell_radius": f"{shell_radius}px",
+        "bubble_radius": f"{bubble_radius}px",
         "title": "ЧАТ TWITCH // ЭФИР",
         "subtitle": subtitle,
         "twitch_channel": twitch_channel,
@@ -165,7 +120,7 @@ def build_chat_config(
         "compact_mode": bool(compact_mode),
         "reveal_only": bool(reveal_only),
         "idle_fade_ms": 340,
-        "message_life_ms": 13500 if style_name == "Нуар" else 11800,
+        "message_life_ms": 11800,
         "max_messages": 5,
         "demo_mode": False,
     }
@@ -179,19 +134,28 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>__APP_TITLE__ chat overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --panel-width: 31;
+      --body-font: "Manrope", "Segoe UI", sans-serif;
+      --title-font: "Unbounded", "Manrope", sans-serif;
       --accent: #8ef7d4;
       --accent-2: #8ea8ff;
       --accent-3: #e28eff;
       --panel: rgba(7, 16, 26, 0.58);
       --panel-2: rgba(14, 29, 41, 0.92);
       --panel-3: rgba(19, 36, 48, 0.82);
+      --message-fill: rgba(19, 36, 48, 0.82);
       --text: #f5fbff;
       --muted: #b4c7dd;
       --line: rgba(142, 247, 212, 0.26);
       --shadow: rgba(88, 218, 190, 0.22);
+      --message-size: 20px;
+      --shell-radius: 34px;
+      --bubble-radius: 24px;
       --message-life: 11800ms;
     }
 
@@ -205,7 +169,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       height: 100%;
       overflow: hidden;
       background: transparent;
-      font-family: "Segoe UI", system-ui, sans-serif;
+      font-family: var(--body-font);
       color: var(--text);
     }
 
@@ -225,7 +189,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       top: 20px;
       width: min(max(380px, calc(var(--panel-width) * 1vw)), 560px);
       max-height: calc(100vh - 40px);
-      border-radius: 34px;
+      border-radius: var(--shell-radius);
       overflow: hidden;
       isolation: isolate;
       display: flex;
@@ -259,7 +223,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
     .chat-shell.compact {
       top: 14px;
-      border-radius: 28px;
+      border-radius: var(--shell-radius);
       background:
         linear-gradient(180deg, color-mix(in srgb, var(--panel) 86%, transparent), color-mix(in srgb, var(--panel-2) 94%, transparent)),
         linear-gradient(140deg, rgba(255,255,255,0.03), transparent 24%);
@@ -277,7 +241,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       min-height: 100%;
     }
     .chat-shell.compact .message {
-      border-radius: 24px;
+      border-radius: calc(var(--bubble-radius) - 2px);
     }
 
     .chat-shell.idle-hidden {
@@ -328,7 +292,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
 
     .chat-shell.reveal-only .message {
-      border-radius: 28px;
+      border-radius: calc(var(--bubble-radius) + 4px);
       backdrop-filter: blur(16px) saturate(1.04);
       box-shadow:
         0 18px 34px rgba(0,0,0,0.24),
@@ -354,7 +318,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
 
     .chat-shell::after {
       inset: 1px;
-      border-radius: 33px;
+      border-radius: calc(var(--shell-radius) - 1px);
       border: 1px solid rgba(255,255,255,0.05);
       mask: linear-gradient(180deg, rgba(255,255,255,0.9), transparent 26%);
     }
@@ -419,6 +383,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
 
     .eyebrow {
+      font-family: var(--title-font);
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.16em;
@@ -428,6 +393,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
 
     .title {
+      font-family: var(--title-font);
       font-size: 15px;
       font-weight: 900;
       letter-spacing: 0.05em;
@@ -554,10 +520,11 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       grid-template-columns: 54px minmax(0, 1fr);
       gap: 12px;
       padding: 14px;
-      border-radius: 24px;
+      border-radius: var(--bubble-radius);
       background:
         linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
-        linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%);
+        linear-gradient(135deg, color-mix(in srgb, var(--message-fill) 88%, transparent), transparent 52%),
+        linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34%);
       border: 1px solid rgba(255,255,255,0.07);
       box-shadow:
         0 14px 30px rgba(0,0,0,0.24),
@@ -650,6 +617,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
 
     .name {
+      font-family: var(--title-font);
       font-size: 15px;
       font-weight: 900;
       line-height: 1.1;
@@ -709,7 +677,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
     }
 
     .text {
-      font-size: 20px;
+      font-size: var(--message-size);
       line-height: 1.38;
       font-weight: 600;
       color: var(--text);
@@ -737,7 +705,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       z-index: 2;
       margin: 14px;
       padding: 20px;
-      border-radius: 24px;
+      border-radius: calc(var(--bubble-radius) + 2px);
       background:
         linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)),
         linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 40%);
@@ -1208,7 +1176,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
 
     function configVisualSignature(config) {
       return JSON.stringify({
-        style_key: config.style_key || "aurora",
+        style_key: config.style_key || "custom",
         side_key: config.side_key || "right",
         compact_mode: Boolean(config.compact_mode),
         reveal_only: Boolean(config.reveal_only),
@@ -1226,6 +1194,12 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
         line: config.line || "",
         shadow: config.shadow || "",
         panel_width_percent: Number(config.panel_width_percent || 31),
+        font_family: config.font_family || "",
+        title_font_family: config.title_font_family || "",
+        message_fill: config.message_fill || "",
+        message_size: config.message_size || "",
+        shell_radius: config.shell_radius || "",
+        bubble_radius: config.bubble_radius || "",
       });
     }
 
@@ -1233,7 +1207,7 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       shell.classList.remove("left", "right", "compact");
       shell.classList.add(config.side_key === "left" ? "left" : "right");
       shell.classList.toggle("compact", Boolean(config.compact_mode));
-      shell.dataset.style = String(config.style_key || "aurora");
+      shell.dataset.style = String(config.style_key || "custom");
     }
 
     function setVar(name, value) {
@@ -1622,16 +1596,22 @@ def build_chat_overlay_html(config: dict[str, object]) -> str:
       currentConfig = config || {};
 
       setVar("--panel-width", String(config.panel_width_percent || 31));
+      setVar("--body-font", config.font_family || '"Manrope", "Segoe UI", sans-serif');
+      setVar("--title-font", config.title_font_family || '"Unbounded", "Manrope", sans-serif');
       setVar("--accent", config.accent || "#8ef7d4");
       setVar("--accent-2", config.accent2 || "#8ea8ff");
       setVar("--accent-3", config.accent3 || "#e28eff");
       setVar("--panel", config.panel || "rgba(7, 16, 26, 0.58)");
       setVar("--panel-2", config.panel2 || "rgba(14, 29, 41, 0.92)");
       setVar("--panel-3", config.panel3 || "rgba(19, 36, 48, 0.82)");
+      setVar("--message-fill", config.message_fill || "rgba(19, 36, 48, 0.82)");
       setVar("--text", config.text || "#f5fbff");
       setVar("--muted", config.muted || "#b4c7dd");
       setVar("--line", config.line || "rgba(142, 247, 212, 0.26)");
       setVar("--shadow", config.shadow || "rgba(88, 218, 190, 0.22)");
+      setVar("--message-size", config.message_size || "20px");
+      setVar("--shell-radius", config.shell_radius || "34px");
+      setVar("--bubble-radius", config.bubble_radius || "24px");
 
       const nextVisualSignature = configVisualSignature(config);
       if (nextVisualSignature !== visualSignature) {

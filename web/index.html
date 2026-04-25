@@ -219,7 +219,7 @@
           <div class="deck__head">
             <div>
               <p class="eyebrow">Чат Twitch</p>
-              <h2>Подключение и стиль</h2>
+              <h2>Подключение и тема</h2>
             </div>
           </div>
 
@@ -243,13 +243,68 @@
 
           <div class="field-grid field-grid--double">
             <label class="field">
-              <span>Стиль чата</span>
-              <select data-setting="chatStyle" id="chatStyle"></select>
-            </label>
-            <label class="field">
               <span>Сторона чата</span>
               <select data-setting="chatSide" id="chatSide"></select>
             </label>
+            <label class="field">
+              <span>Шрифт сообщений</span>
+              <input type="text" data-setting="chatFontFamily" id="chatFontFamily" placeholder='Manrope, "Segoe UI", sans-serif'>
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Шрифт заголовков</span>
+              <input type="text" data-setting="chatTitleFontFamily" id="chatTitleFontFamily" placeholder='Unbounded, Manrope, sans-serif'>
+            </label>
+            <label class="field">
+              <span>Цвет панели</span>
+              <input type="color" data-setting="chatPanelColor" id="chatPanelColor">
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--triple">
+            <label class="field">
+              <span>Акцент 1</span>
+              <input type="color" data-setting="chatAccent" id="chatAccent">
+            </label>
+            <label class="field">
+              <span>Акцент 2</span>
+              <input type="color" data-setting="chatAccent2" id="chatAccent2">
+            </label>
+            <label class="field">
+              <span>Акцент 3</span>
+              <input type="color" data-setting="chatAccent3" id="chatAccent3">
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--triple">
+            <label class="field">
+              <span>Основной текст</span>
+              <input type="color" data-setting="chatTextColor" id="chatTextColor">
+            </label>
+            <label class="field">
+              <span>Вторичный текст</span>
+              <input type="color" data-setting="chatMutedColor" id="chatMutedColor">
+            </label>
+            <label class="field">
+              <span>Цвет карточек</span>
+              <input type="color" data-setting="chatMessageColor" id="chatMessageColor">
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Второй слой панели</span>
+              <input type="color" data-setting="chatPanelColorSecondary" id="chatPanelColorSecondary">
+            </label>
+            <div class="field field--actions">
+              <span>Сейчас меняется всё вручную</span>
+              <div class="inline-actions">
+                <button class="mini-btn" id="chatPreviewOpenBtnSecondary">Открыть чат</button>
+                <button class="mini-btn mini-btn--primary" id="chatPreviewCopyBtnSecondary">Копировать адрес</button>
+              </div>
+            </div>
           </div>
 
           <div class="slider-group">
@@ -259,6 +314,48 @@
                 <strong id="chatWidthPercentValue">31%</strong>
               </div>
               <input type="range" min="24" max="42" step="1" data-setting="chatWidthPercent" id="chatWidthPercent">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Плотность панели</span>
+                <strong id="chatPanelOpacityValue">62%</strong>
+              </div>
+              <input type="range" min="10" max="100" step="1" data-setting="chatPanelOpacity" id="chatPanelOpacity">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Плотность второго слоя</span>
+                <strong id="chatPanelSecondaryOpacityValue">92%</strong>
+              </div>
+              <input type="range" min="10" max="100" step="1" data-setting="chatPanelSecondaryOpacity" id="chatPanelSecondaryOpacity">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Плотность карточек</span>
+                <strong id="chatMessageOpacityValue">88%</strong>
+              </div>
+              <input type="range" min="10" max="100" step="1" data-setting="chatMessageOpacity" id="chatMessageOpacity">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Размер текста</span>
+                <strong id="chatMessageSizeValue">20 px</strong>
+              </div>
+              <input type="range" min="14" max="32" step="1" data-setting="chatMessageSize" id="chatMessageSize">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Скругление панели</span>
+                <strong id="chatShellRadiusValue">34 px</strong>
+              </div>
+              <input type="range" min="20" max="44" step="1" data-setting="chatShellRadius" id="chatShellRadius">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Скругление карточек</span>
+                <strong id="chatBubbleRadiusValue">24 px</strong>
+              </div>
+              <input type="range" min="16" max="36" step="1" data-setting="chatBubbleRadius" id="chatBubbleRadius">
             </label>
           </div>
 

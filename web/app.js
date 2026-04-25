@@ -47,6 +47,12 @@ const els = {
   tuneAutoThresholdValue: document.getElementById("tuneAutoThresholdValue"),
   tuneAutoFloorValue: document.getElementById("tuneAutoFloorValue"),
   tuneAutoReleaseValue: document.getElementById("tuneAutoReleaseValue"),
+  chatPanelOpacityValue: document.getElementById("chatPanelOpacityValue"),
+  chatPanelSecondaryOpacityValue: document.getElementById("chatPanelSecondaryOpacityValue"),
+  chatMessageOpacityValue: document.getElementById("chatMessageOpacityValue"),
+  chatMessageSizeValue: document.getElementById("chatMessageSizeValue"),
+  chatShellRadiusValue: document.getElementById("chatShellRadiusValue"),
+  chatBubbleRadiusValue: document.getElementById("chatBubbleRadiusValue"),
   scalePercentValue: document.getElementById("scalePercentValue"),
   marginXValue: document.getElementById("marginXValue"),
   marginYValue: document.getElementById("marginYValue"),
@@ -77,6 +83,8 @@ const els = {
   scenePreviewCopyChatBtn: document.getElementById("scenePreviewCopyChatBtn"),
   chatPreviewOpenBtn: document.getElementById("chatPreviewOpenBtn"),
   chatPreviewCopyBtn: document.getElementById("chatPreviewCopyBtn"),
+  chatPreviewOpenBtnSecondary: document.getElementById("chatPreviewOpenBtnSecondary"),
+  chatPreviewCopyBtnSecondary: document.getElementById("chatPreviewCopyBtnSecondary"),
   chatPreviewOpenSceneBtn: document.getElementById("chatPreviewOpenSceneBtn"),
   chatPreviewCopySceneBtn: document.getElementById("chatPreviewCopySceneBtn"),
   tunePlayerRouteInput: document.getElementById("tunePlayerRouteInput"),
@@ -129,6 +137,22 @@ const fieldMap = {
   chatUrl: document.getElementById("chatUrl"),
   chatAuthUser: document.getElementById("chatAuthUser"),
   chatAuthToken: document.getElementById("chatAuthToken"),
+  chatFontFamily: document.getElementById("chatFontFamily"),
+  chatTitleFontFamily: document.getElementById("chatTitleFontFamily"),
+  chatAccent: document.getElementById("chatAccent"),
+  chatAccent2: document.getElementById("chatAccent2"),
+  chatAccent3: document.getElementById("chatAccent3"),
+  chatTextColor: document.getElementById("chatTextColor"),
+  chatMutedColor: document.getElementById("chatMutedColor"),
+  chatPanelColor: document.getElementById("chatPanelColor"),
+  chatPanelColorSecondary: document.getElementById("chatPanelColorSecondary"),
+  chatMessageColor: document.getElementById("chatMessageColor"),
+  chatPanelOpacity: document.getElementById("chatPanelOpacity"),
+  chatPanelSecondaryOpacity: document.getElementById("chatPanelSecondaryOpacity"),
+  chatMessageOpacity: document.getElementById("chatMessageOpacity"),
+  chatMessageSize: document.getElementById("chatMessageSize"),
+  chatShellRadius: document.getElementById("chatShellRadius"),
+  chatBubbleRadius: document.getElementById("chatBubbleRadius"),
   tunePlayerUrl: document.getElementById("tunePlayerUrl"),
   tuneQueueUrl: document.getElementById("tuneQueueUrl"),
   tuneDockUrl: document.getElementById("tuneDockUrl"),
@@ -139,7 +163,6 @@ const fieldMap = {
   tuneAutoPlayer: document.getElementById("tuneAutoPlayer"),
   tuneAutoQueue: document.getElementById("tuneAutoQueue"),
   tuneAutoDock: document.getElementById("tuneAutoDock"),
-  chatStyle: document.getElementById("chatStyle"),
   chatSide: document.getElementById("chatSide"),
   chatWidthPercent: document.getElementById("chatWidthPercent"),
   chatCompactMode: document.getElementById("chatCompactMode"),
@@ -220,7 +243,6 @@ function hydrateChoices(data) {
   setOptions(fieldMap.streamMoment, data.choices.moments, data.settings.streamMoment);
   setOptions(fieldMap.presetLabel, data.choices.presets, data.settings.presetLabel);
   setOptions(fieldMap.sceneStyle, data.choices.sceneStyles, data.settings.sceneStyle);
-  setOptions(fieldMap.chatStyle, data.choices.chatStyles, data.settings.chatStyle);
   setOptions(fieldMap.chatSide, data.choices.chatSides, data.settings.chatSide);
   setOptions(fieldMap.anchorLabel, data.choices.anchors, data.settings.anchorLabel);
   setOptions(fieldMap.deviceLabel, data.devices.available, data.devices.selected);
@@ -247,6 +269,22 @@ function hydrateForm(settings, devices) {
   fieldMap.chatUrl.value = settings.chatUrl;
   fieldMap.chatAuthUser.value = settings.chatAuthUser;
   fieldMap.chatAuthToken.value = settings.chatAuthToken;
+  fieldMap.chatFontFamily.value = settings.chatFontFamily || "";
+  fieldMap.chatTitleFontFamily.value = settings.chatTitleFontFamily || "";
+  fieldMap.chatAccent.value = settings.chatAccent || "#74E7FF";
+  fieldMap.chatAccent2.value = settings.chatAccent2 || "#FF66C7";
+  fieldMap.chatAccent3.value = settings.chatAccent3 || "#FFC970";
+  fieldMap.chatTextColor.value = settings.chatTextColor || "#F5FBFF";
+  fieldMap.chatMutedColor.value = settings.chatMutedColor || "#B4C7DD";
+  fieldMap.chatPanelColor.value = settings.chatPanelColor || "#132033";
+  fieldMap.chatPanelColorSecondary.value = settings.chatPanelColorSecondary || "#1C2A42";
+  fieldMap.chatMessageColor.value = settings.chatMessageColor || "#18263A";
+  fieldMap.chatPanelOpacity.value = settings.chatPanelOpacity ?? 62;
+  fieldMap.chatPanelSecondaryOpacity.value = settings.chatPanelSecondaryOpacity ?? 92;
+  fieldMap.chatMessageOpacity.value = settings.chatMessageOpacity ?? 88;
+  fieldMap.chatMessageSize.value = settings.chatMessageSize ?? 20;
+  fieldMap.chatShellRadius.value = settings.chatShellRadius ?? 34;
+  fieldMap.chatBubbleRadius.value = settings.chatBubbleRadius ?? 24;
   fieldMap.tunePlayerUrl.value = settings.tunePlayerUrl || "";
   fieldMap.tuneQueueUrl.value = settings.tuneQueueUrl || "";
   fieldMap.tuneDockUrl.value = settings.tuneDockUrl || "";
@@ -257,7 +295,6 @@ function hydrateForm(settings, devices) {
   fieldMap.tuneAutoPlayer.checked = Boolean(settings.tuneAutoPlayer);
   fieldMap.tuneAutoQueue.checked = Boolean(settings.tuneAutoQueue);
   fieldMap.tuneAutoDock.checked = Boolean(settings.tuneAutoDock);
-  fieldMap.chatStyle.value = settings.chatStyle;
   fieldMap.chatSide.value = settings.chatSide;
   fieldMap.chatWidthPercent.value = settings.chatWidthPercent;
   fieldMap.chatCompactMode.checked = settings.chatCompactMode;
@@ -266,6 +303,12 @@ function hydrateForm(settings, devices) {
   fieldMap.deviceLabel.value = devices.selected || "";
 
   els.thresholdValue.textContent = Math.round(settings.threshold);
+  els.chatPanelOpacityValue.textContent = `${Math.round(settings.chatPanelOpacity ?? 62)}%`;
+  els.chatPanelSecondaryOpacityValue.textContent = `${Math.round(settings.chatPanelSecondaryOpacity ?? 92)}%`;
+  els.chatMessageOpacityValue.textContent = `${Math.round(settings.chatMessageOpacity ?? 88)}%`;
+  els.chatMessageSizeValue.textContent = `${Math.round(settings.chatMessageSize ?? 20)} px`;
+  els.chatShellRadiusValue.textContent = `${Math.round(settings.chatShellRadius ?? 34)} px`;
+  els.chatBubbleRadiusValue.textContent = `${Math.round(settings.chatBubbleRadius ?? 24)} px`;
   els.tuneAutoThresholdValue.textContent = `${Math.round(settings.tuneAutoThreshold ?? 18)}`;
   els.tuneAutoFloorValue.textContent = `${Math.round(settings.tuneAutoFloor ?? 35)}%`;
   els.tuneAutoReleaseValue.textContent = `${((settings.tuneAutoReleaseMs ?? 900) / 1000).toFixed(1)} c`;
@@ -564,6 +607,12 @@ function bindInputs() {
       if (key === "marginX") els.marginXValue.textContent = `${Math.round(Number(value))} px`;
       if (key === "marginY") els.marginYValue.textContent = `${Math.round(Number(value))} px`;
       if (key === "chatWidthPercent") els.chatWidthPercentValue.textContent = `${Math.round(Number(value))}%`;
+      if (key === "chatPanelOpacity") els.chatPanelOpacityValue.textContent = `${Math.round(Number(value))}%`;
+      if (key === "chatPanelSecondaryOpacity") els.chatPanelSecondaryOpacityValue.textContent = `${Math.round(Number(value))}%`;
+      if (key === "chatMessageOpacity") els.chatMessageOpacityValue.textContent = `${Math.round(Number(value))}%`;
+      if (key === "chatMessageSize") els.chatMessageSizeValue.textContent = `${Math.round(Number(value))} px`;
+      if (key === "chatShellRadius") els.chatShellRadiusValue.textContent = `${Math.round(Number(value))} px`;
+      if (key === "chatBubbleRadius") els.chatBubbleRadiusValue.textContent = `${Math.round(Number(value))} px`;
       if (key === "threshold") els.thresholdValue.textContent = `${Math.round(Number(value))}`;
       if (key === "tuneAutoThreshold") els.tuneAutoThresholdValue.textContent = `${Math.round(Number(value))}`;
       if (key === "tuneAutoFloor") els.tuneAutoFloorValue.textContent = `${Math.round(Number(value))}%`;
@@ -617,6 +666,8 @@ function bindButtons() {
   bindClick(els.scenePreviewCopyChatBtn, () => copyText(state.data?.routes.chat));
   bindClick(els.chatPreviewOpenBtn, () => openUrl(state.data?.routes.chat));
   bindClick(els.chatPreviewCopyBtn, () => copyText(state.data?.routes.chat));
+  bindClick(els.chatPreviewOpenBtnSecondary, () => openUrl(state.data?.routes.chat));
+  bindClick(els.chatPreviewCopyBtnSecondary, () => copyText(state.data?.routes.chat));
   bindClick(els.chatPreviewOpenSceneBtn, () => openUrl(state.data?.routes.overlay));
   bindClick(els.chatPreviewCopySceneBtn, () => copyText(state.data?.routes.overlay));
 
