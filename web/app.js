@@ -23,6 +23,7 @@ const els = {
   captureHint: document.getElementById("captureHint"),
   sceneMeta: document.getElementById("sceneMeta"),
   chatStatusText: document.getElementById("chatStatusText"),
+  tuneStatusText: document.getElementById("tuneStatusText"),
   audioStatusText: document.getElementById("audioStatusText"),
   obsHelpText: document.getElementById("obsHelpText"),
   statusAudioLine: document.getElementById("statusAudioLine"),
@@ -48,10 +49,24 @@ const els = {
   copyOverlayBtn: document.getElementById("copyOverlayBtn"),
   openChatBtn: document.getElementById("openChatBtn"),
   copyChatBtn: document.getElementById("copyChatBtn"),
+  openTuneHomeBtn: document.getElementById("openTuneHomeBtn"),
+  openTuneDashboardBtn: document.getElementById("openTuneDashboardBtn"),
   copyOverlayRouteBtn: document.getElementById("copyOverlayRouteBtn"),
   openOverlayRouteBtn: document.getElementById("openOverlayRouteBtn"),
   copyChatRouteBtn: document.getElementById("copyChatRouteBtn"),
   openChatRouteBtn: document.getElementById("openChatRouteBtn"),
+  tunePlayerRouteInput: document.getElementById("tunePlayerRouteInput"),
+  tuneQueueRouteInput: document.getElementById("tuneQueueRouteInput"),
+  tuneDockRouteInput: document.getElementById("tuneDockRouteInput"),
+  copyTunePlayerRouteBtn: document.getElementById("copyTunePlayerRouteBtn"),
+  openTunePlayerRouteBtn: document.getElementById("openTunePlayerRouteBtn"),
+  copyTunePlayerDirectBtn: document.getElementById("copyTunePlayerDirectBtn"),
+  copyTuneQueueRouteBtn: document.getElementById("copyTuneQueueRouteBtn"),
+  openTuneQueueRouteBtn: document.getElementById("openTuneQueueRouteBtn"),
+  copyTuneQueueDirectBtn: document.getElementById("copyTuneQueueDirectBtn"),
+  copyTuneDockRouteBtn: document.getElementById("copyTuneDockRouteBtn"),
+  openTuneDockRouteBtn: document.getElementById("openTuneDockRouteBtn"),
+  openTuneDockDirectBtn: document.getElementById("openTuneDockDirectBtn"),
   refreshDevicesBtn: document.getElementById("refreshDevicesBtn"),
   startAudioBtn: document.getElementById("startAudioBtn"),
   stopAudioBtn: document.getElementById("stopAudioBtn"),
@@ -78,6 +93,9 @@ const fieldMap = {
   chatUrl: document.getElementById("chatUrl"),
   chatAuthUser: document.getElementById("chatAuthUser"),
   chatAuthToken: document.getElementById("chatAuthToken"),
+  tunePlayerUrl: document.getElementById("tunePlayerUrl"),
+  tuneQueueUrl: document.getElementById("tuneQueueUrl"),
+  tuneDockUrl: document.getElementById("tuneDockUrl"),
   chatStyle: document.getElementById("chatStyle"),
   chatSide: document.getElementById("chatSide"),
   chatWidthPercent: document.getElementById("chatWidthPercent"),
@@ -181,6 +199,9 @@ function hydrateForm(settings, devices) {
   fieldMap.chatUrl.value = settings.chatUrl;
   fieldMap.chatAuthUser.value = settings.chatAuthUser;
   fieldMap.chatAuthToken.value = settings.chatAuthToken;
+  fieldMap.tunePlayerUrl.value = settings.tunePlayerUrl || "";
+  fieldMap.tuneQueueUrl.value = settings.tuneQueueUrl || "";
+  fieldMap.tuneDockUrl.value = settings.tuneDockUrl || "";
   fieldMap.chatStyle.value = settings.chatStyle;
   fieldMap.chatSide.value = settings.chatSide;
   fieldMap.chatWidthPercent.value = settings.chatWidthPercent;
@@ -360,12 +381,16 @@ function applyState(data, { hydrateForm: shouldHydrate = false } = {}) {
   els.chatRouteChip.textContent = data.routes.chatShort;
   els.overlayRouteInput.value = data.routes.overlay;
   els.chatRouteInput.value = data.routes.chat;
+  els.tunePlayerRouteInput.value = data.routes.musicPlayer || "";
+  els.tuneQueueRouteInput.value = data.routes.musicQueue || "";
+  els.tuneDockRouteInput.value = data.routes.musicDock || "";
   els.sceneSizeStat.textContent = `${data.preview.width} × ${data.preview.height}`;
 
   els.presetNote.textContent = data.settings.presetNote || "Пак обновлен.";
   els.captureHint.textContent = data.status.captureHint;
   els.sceneMeta.textContent = data.status.sceneMeta;
   els.chatStatusText.textContent = data.status.chat;
+  els.tuneStatusText.textContent = data.status.tune2live || "Tune2Live пока не подключен.";
   els.audioStatusText.textContent = data.status.audio;
   els.obsHelpText.textContent = data.status.help;
   els.statusAudioLine.textContent = data.status.audio;
@@ -456,10 +481,21 @@ function bindButtons() {
   els.copyOverlayBtn.addEventListener("click", () => copyText(state.data?.routes.overlay));
   els.openChatBtn.addEventListener("click", () => openUrl(state.data?.routes.chat));
   els.copyChatBtn.addEventListener("click", () => copyText(state.data?.routes.chat));
+  els.openTuneHomeBtn.addEventListener("click", () => openUrl(state.data?.routes.tuneHome));
+  els.openTuneDashboardBtn.addEventListener("click", () => openUrl(state.data?.routes.tuneDashboard));
   els.copyOverlayRouteBtn.addEventListener("click", () => copyText(state.data?.routes.overlay));
   els.openOverlayRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.overlay));
   els.copyChatRouteBtn.addEventListener("click", () => copyText(state.data?.routes.chat));
   els.openChatRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.chat));
+  els.copyTunePlayerRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicPlayer));
+  els.openTunePlayerRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicPlayer));
+  els.copyTunePlayerDirectBtn.addEventListener("click", () => copyText(state.data?.routes.musicPlayerDirect));
+  els.copyTuneQueueRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicQueue));
+  els.openTuneQueueRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicQueue));
+  els.copyTuneQueueDirectBtn.addEventListener("click", () => copyText(state.data?.routes.musicQueueDirect));
+  els.copyTuneDockRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicDock));
+  els.openTuneDockRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicDock));
+  els.openTuneDockDirectBtn.addEventListener("click", () => openUrl(state.data?.routes.musicDockDirect || state.data?.routes.tuneDashboard));
 
   els.refreshDevicesBtn.addEventListener("click", async () => {
     try {

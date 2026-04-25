@@ -53,6 +53,27 @@ def extract_twitch_channel(url: str) -> str | None:
     return None
 
 
+def normalize_tune2live_url(raw_url: str) -> str:
+    raw = str(raw_url or "").strip().strip('"')
+    if not raw:
+        return ""
+
+    parsed = urlparse(raw if urlparse(raw).scheme else f"https://{raw}")
+    host = parsed.netloc.lower()
+    if ":" in host:
+        host = host.split(":", 1)[0]
+
+    if host == "www.tune2live.com":
+        host = "tune2live.com"
+
+    if host != "tune2live.com":
+        return ""
+
+    path = parsed.path or "/"
+    query = f"?{parsed.query}" if parsed.query else ""
+    return f"https://{host}{path}{query}"
+
+
 def default_image_path(base_dir: Path, filename: str) -> str:
     path = base_dir / filename
     return str(path) if path.exists() else ""

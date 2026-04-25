@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from html import escape
 import json
 import mimetypes
 import threading
@@ -31,6 +32,7 @@ from utils import (
     clamp,
     default_image_path,
     extract_twitch_channel,
+    normalize_tune2live_url,
     parse_int,
     portable_media_path,
     resolve_media_path,
@@ -52,6 +54,81 @@ def coerce_bool(value: object) -> bool:
 class StaticResponse:
     content: bytes
     content_type: str
+
+
+def build_tune2live_embed_html(title: str, target_url: str) -> str:
+    safe_title = escape(title)
+    safe_target = escape(target_url, quote=True)
+    has_target = bool(target_url)
+    body = (
+        f'<iframe class="music-frame" src="{safe_target}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-read; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>'
+        if has_target
+        else (
+            '<div class="music-empty">'
+            f"<strong>{safe_title}</strong>"
+            "<span>Сначала добавь ссылку Tune2Live в панели управления.</span>"
+            "</div>"
+        )
+    )
+    return f"""<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{safe_title}</title>
+  <style>
+    html, body {{
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+      color: #f4f8ff;
+    }}
+    body {{
+      background:
+        radial-gradient(circle at top left, rgba(116, 231, 255, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(255, 102, 199, 0.08), transparent 28%),
+        rgba(4, 8, 14, 0.92);
+    }}
+    .music-stage {{
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: transparent;
+    }}
+    .music-frame {{
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: transparent;
+    }}
+    .music-empty {{
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 24px;
+      color: rgba(244, 248, 255, 0.86);
+    }}
+    .music-empty strong {{
+      font-size: 20px;
+      letter-spacing: 0.02em;
+    }}
+    .music-empty span {{
+      color: rgba(180, 199, 221, 0.9);
+      max-width: 420px;
+      line-height: 1.5;
+    }}
+  </style>
+</head>
+<body>
+  <div class="music-stage">{body}</div>
+</body>
+</html>"""
 
 
 class WebRuntime:
@@ -109,6 +186,9 @@ class WebRuntime:
         self.chat_auth_token = ""
         self.chat_compact_mode = True
         self.chat_reveal_only = True
+        self.tune_player_url = ""
+        self.tune_queue_url = ""
+        self.tune_dock_url = ""
         self.internet_pack = "Ночной грид"
         self.stream_moment = "Геймплей"
         self.preset_note = ""
@@ -139,13 +219,18 @@ class WebRuntime:
         self.deck_chat = "чат недоступен"
         self.overlay_url = ""
         self.chat_browser_url = ""
+        self.music_player_url = ""
+        self.music_queue_url = ""
+        self.music_dock_url = ""
         self.obs_help = ""
         self.media_errors: list[str] = []
+        self.tune_status = "Tune2Live пока не подключен."
 
         self.refresh_devices()
         self.apply_stream_preset()
         self.load_settings()
         self.refresh_chat_overlay_cache()
+        self.refresh_tune2live_cache()
         self.update_guidance()
         self.reload_media(show_errors=False)
         self.render()
@@ -170,6 +255,9 @@ class WebRuntime:
         with self.lock:
             self.overlay_url = f"http://{self.host}:{self.overlay_port}/overlay"
             self.chat_browser_url = f"http://{self.host}:{self.overlay_port}/chat"
+            self.music_player_url = f"http://{self.host}:{self.overlay_port}/music/player"
+            self.music_queue_url = f"http://{self.host}:{self.overlay_port}/music/queue"
+            self.music_dock_url = f"http://{self.host}:{self.overlay_port}/music/dock"
             self.deck_overlay = f"{self.host}:{self.overlay_port}"
             self.deck_chat = f"{self.host}:{self.overlay_port}/chat"
             self.update_guidance()
@@ -317,6 +405,31 @@ class WebRuntime:
 
             self.scene_dirty = True
 
+    def refresh_tune2live_cache(self) -> None:
+        with self.lock:
+            self.tune_player_url = normalize_tune2live_url(self.tune_player_url)
+            self.tune_queue_url = normalize_tune2live_url(self.tune_queue_url)
+            self.tune_dock_url = normalize_tune2live_url(self.tune_dock_url)
+
+            connected_parts: list[str] = []
+            if self.tune_player_url:
+                connected_parts.append("плеер")
+            if self.tune_queue_url:
+                connected_parts.append("очередь")
+            if self.tune_dock_url:
+                connected_parts.append("док-панель")
+
+            if connected_parts:
+                self.tune_status = (
+                    "Tune2Live подключен: "
+                    + ", ".join(connected_parts)
+                    + ". Для OBS можешь использовать локальные маршруты ниже или прямые ссылки самого сервиса."
+                )
+            else:
+                self.tune_status = (
+                    "Tune2Live пока не подключен. Вставь ссылки на виджет плеера, очередь заказов или док-панель из сервиса Tune2Live."
+                )
+
     def settings_payload(self) -> dict[str, object]:
         with self.lock:
             return {
@@ -341,6 +454,9 @@ class WebRuntime:
                 "chatUrl": self.chat_url,
                 "chatAuthUser": self.chat_auth_user,
                 "chatAuthToken": self.chat_auth_token,
+                "tunePlayerUrl": self.tune_player_url,
+                "tuneQueueUrl": self.tune_queue_url,
+                "tuneDockUrl": self.tune_dock_url,
                 "threshold": round(self.threshold, 1),
                 "deviceLabel": self.device_label,
                 "imageIdle": self.image_paths["idle"],
@@ -451,14 +567,29 @@ class WebRuntime:
             self.scene_meta = (
                 f"Стиль: {self.scene_style} · Чат: {self.chat_style} · Режим: {mode_label} · Сцена: {width} x {height}"
             )
-            self.obs_help = (
-                "1. Добавь Browser Source с адресом сцены.\n"
-                f"2. Адрес сцены: {self.overlay_url or 'появится после старта'}\n"
-                f"3. Адрес отдельного чата: {self.chat_browser_url or 'появится после старта'}\n"
-                f"4. Размер сцены: {width} x {height}\n"
-                "5. Для чистой прозрачности используй режим 'Прозрачный'.\n"
-                "6. Для чата лучше использовать локальный /chat, а не прямую страницу Twitch."
-            )
+            help_lines = [
+                "1. Добавь Browser Source с адресом сцены."
+            ]
+            help_lines += [
+                f"2. Адрес сцены: {self.overlay_url or 'появится после старта'}",
+                f"3. Адрес отдельного чата: {self.chat_browser_url or 'появится после старта'}",
+                f"4. Размер сцены: {width} x {height}",
+                "5. Для чистой прозрачности используй режим 'Прозрачный'.",
+                "6. Для чата лучше использовать локальный /chat, а не прямую страницу Twitch.",
+            ]
+
+            next_step = 7
+            if self.tune_player_url:
+                help_lines.append(f"{next_step}. Tune2Live плеер для OBS: {self.music_player_url or 'появится после старта'}")
+                next_step += 1
+            if self.tune_queue_url:
+                help_lines.append(f"{next_step}. Tune2Live очередь для OBS: {self.music_queue_url or 'появится после старта'}")
+                next_step += 1
+            if self.tune_dock_url:
+                help_lines.append(f"{next_step}. Tune2Live док-панель: {self.music_dock_url or 'появится после старта'}")
+                next_step += 1
+
+            self.obs_help = "\n".join(help_lines)
 
     def is_speaking(self, level: float) -> bool:
         now = time.monotonic()
@@ -545,6 +676,7 @@ class WebRuntime:
 
         media_changed = False
         recalc_guidance = False
+        tune_validation_error = ""
 
         with self.lock:
             if "presetLabel" in payload and str(payload["presetLabel"]) in SCENE_PRESETS:
@@ -605,6 +737,24 @@ class WebRuntime:
                 self.chat_auth_user = str(payload["chatAuthUser"]).strip()
             if "chatAuthToken" in payload:
                 self.chat_auth_token = str(payload["chatAuthToken"]).strip()
+            if "tunePlayerUrl" in payload:
+                raw = str(payload["tunePlayerUrl"]).strip()
+                normalized = normalize_tune2live_url(raw)
+                if raw and not normalized:
+                    tune_validation_error = "Для Tune2Live поддерживаются только прямые ссылки tune2live.com."
+                self.tune_player_url = normalized
+            if "tuneQueueUrl" in payload:
+                raw = str(payload["tuneQueueUrl"]).strip()
+                normalized = normalize_tune2live_url(raw)
+                if raw and not normalized:
+                    tune_validation_error = "Для Tune2Live поддерживаются только прямые ссылки tune2live.com."
+                self.tune_queue_url = normalized
+            if "tuneDockUrl" in payload:
+                raw = str(payload["tuneDockUrl"]).strip()
+                normalized = normalize_tune2live_url(raw)
+                if raw and not normalized:
+                    tune_validation_error = "Для Tune2Live поддерживаются только прямые ссылки tune2live.com."
+                self.tune_dock_url = normalized
             if "threshold" in payload:
                 self.threshold = clamp(float(payload["threshold"]), 1.0, 50.0)
             if "deviceLabel" in payload and str(payload["deviceLabel"]) in self.device_map:
@@ -624,9 +774,13 @@ class WebRuntime:
             self.scene_dirty = True
 
         self.refresh_chat_overlay_cache()
+        self.refresh_tune2live_cache()
+        if tune_validation_error:
+            with self.lock:
+                self.tune_status = tune_validation_error
         if media_changed:
             self.reload_media(show_errors=True)
-        if recalc_guidance or "chatUrl" in payload or "chatStyle" in payload or "bgMode" in payload:
+        if recalc_guidance or "chatUrl" in payload or "chatStyle" in payload or "bgMode" in payload or "tunePlayerUrl" in payload or "tuneQueueUrl" in payload or "tuneDockUrl" in payload:
             self.update_guidance()
         if save:
             self.save_settings()
@@ -642,6 +796,14 @@ class WebRuntime:
                 "routes": {
                     "overlay": self.overlay_url,
                     "chat": self.chat_browser_url,
+                    "musicPlayer": self.music_player_url,
+                    "musicQueue": self.music_queue_url,
+                    "musicDock": self.music_dock_url,
+                    "musicPlayerDirect": self.tune_player_url,
+                    "musicQueueDirect": self.tune_queue_url,
+                    "musicDockDirect": self.tune_dock_url,
+                    "tuneHome": "https://tune2live.com/ru",
+                    "tuneDashboard": "https://tune2live.com/ru/dashboard",
                     "overlayShort": self.deck_overlay,
                     "chatShort": self.deck_chat,
                 },
@@ -655,6 +817,7 @@ class WebRuntime:
                     "sceneMeta": self.scene_meta,
                     "audio": self.status_text,
                     "chat": self.chat_text,
+                    "tune2live": self.tune_status,
                     "help": self.obs_help,
                     "mediaErrors": list(self.media_errors),
                 },
@@ -694,6 +857,9 @@ class WebRuntime:
                     "chatUrl": self.chat_url,
                     "chatAuthUser": self.chat_auth_user,
                     "chatAuthToken": self.chat_auth_token,
+                    "tunePlayerUrl": self.tune_player_url,
+                    "tuneQueueUrl": self.tune_queue_url,
+                    "tuneDockUrl": self.tune_dock_url,
                     "threshold": round(self.threshold, 1),
                     "imageIdle": self.image_paths["idle"],
                     "imageTalkA": self.image_paths["talk_a"],
@@ -805,6 +971,27 @@ class WebRequestHandler(BaseHTTPRequestHandler):
                 self._send_bytes(chat_config_json.encode("utf-8"), "application/json; charset=utf-8")
                 return
             self._send_bytes(chat_html.encode("utf-8"), "text/html; charset=utf-8")
+            return
+
+        if path == "/music/player":
+            self._send_bytes(
+                build_tune2live_embed_html("Tune2Live · плеер", self.server.app.tune_player_url).encode("utf-8"),
+                "text/html; charset=utf-8",
+            )
+            return
+
+        if path == "/music/queue":
+            self._send_bytes(
+                build_tune2live_embed_html("Tune2Live · очередь", self.server.app.tune_queue_url).encode("utf-8"),
+                "text/html; charset=utf-8",
+            )
+            return
+
+        if path == "/music/dock":
+            self._send_bytes(
+                build_tune2live_embed_html("Tune2Live · док-панель", self.server.app.tune_dock_url).encode("utf-8"),
+                "text/html; charset=utf-8",
+            )
             return
 
         if path == "/frame.png":

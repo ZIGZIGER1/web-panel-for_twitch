@@ -222,19 +222,6 @@
             </label>
           </div>
 
-          <section class="guide-card guide-card--chat">
-            <div class="guide-card__head">
-              <p class="eyebrow">Быстрый старт</p>
-              <strong>Что вставлять в поле чата</strong>
-            </div>
-            <ul class="guide-list">
-              <li><code>@kanal</code> или просто имя канала, если хочешь самый быстрый вариант.</li>
-              <li><code>https://www.twitch.tv/kanal</code>, если копируешь обычную ссылку на канал.</li>
-              <li><code>https://www.twitch.tv/popout/kanal/chat?popout=</code> или <code>.../embed?parent=localhost</code>, если берешь ссылку именно из чата.</li>
-              <li>Логин и <code>OAuth token</code> не обязательны, но с ними чат подключается стабильнее.</li>
-            </ul>
-          </section>
-
           <div class="field-grid field-grid--double">
             <label class="field">
               <span>Логин Twitch</span>
@@ -290,6 +277,36 @@
         <article class="deck">
           <div class="deck__head">
             <div>
+              <p class="eyebrow">Tune2Live</p>
+              <h2>Музыка, очередь и OBS</h2>
+            </div>
+            <div class="deck-actions">
+              <button class="mini-btn" id="openTuneHomeBtn">Сайт</button>
+              <button class="mini-btn mini-btn--primary" id="openTuneDashboardBtn">Панель</button>
+            </div>
+          </div>
+
+          <div class="field-stack">
+            <label class="field">
+              <span>Виджет плеера</span>
+              <input type="text" data-setting="tunePlayerUrl" id="tunePlayerUrl" placeholder="https://tune2live.com/...">
+            </label>
+            <label class="field">
+              <span>Виджет очереди</span>
+              <input type="text" data-setting="tuneQueueUrl" id="tuneQueueUrl" placeholder="https://tune2live.com/...">
+            </label>
+            <label class="field">
+              <span>Док-панель управления</span>
+              <input type="text" data-setting="tuneDockUrl" id="tuneDockUrl" placeholder="https://tune2live.com/...">
+            </label>
+          </div>
+
+          <p class="support-text" id="tuneStatusText">Tune2Live пока не подключен.</p>
+        </article>
+
+        <article class="deck">
+          <div class="deck__head">
+            <div>
               <p class="eyebrow">Аудио</p>
               <h2>Микрофон и чувствительность</h2>
             </div>
@@ -311,19 +328,6 @@
               </div>
             </div>
           </div>
-
-          <section class="guide-card guide-card--audio">
-            <div class="guide-card__head">
-              <p class="eyebrow">Как запустить</p>
-              <strong>Настройка микрофона</strong>
-            </div>
-            <ol class="guide-list guide-list--ordered">
-              <li>Нажми <strong>Обновить</strong>, чтобы увидеть доступные устройства.</li>
-              <li>Выбери нужный микрофон в списке и нажми <strong>Старт</strong>.</li>
-              <li>Скажи пару фраз и посмотри на шкалу уровня ниже.</li>
-              <li>Подкрути <strong>Порог речи</strong> так, чтобы персонаж не дергался от шума, но реагировал на голос.</li>
-            </ol>
-          </section>
 
           <div class="slider-group">
             <label class="slider-field">
@@ -402,6 +406,39 @@
               <div class="inline-actions">
                 <button class="mini-btn mini-btn--primary" id="copyChatRouteBtn">Копировать</button>
                 <button class="mini-btn" id="openChatRouteBtn">Открыть</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="music-grid">
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Плеер для OBS</h3>
+              <input class="route-input" id="tunePlayerRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTunePlayerRouteBtn">Копировать OBS</button>
+                <button class="mini-btn" id="openTunePlayerRouteBtn">Открыть</button>
+                <button class="mini-btn" id="copyTunePlayerDirectBtn">Прямая ссылка</button>
+              </div>
+            </div>
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Очередь заказов</h3>
+              <input class="route-input" id="tuneQueueRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTuneQueueRouteBtn">Копировать OBS</button>
+                <button class="mini-btn" id="openTuneQueueRouteBtn">Открыть</button>
+                <button class="mini-btn" id="copyTuneQueueDirectBtn">Прямая ссылка</button>
+              </div>
+            </div>
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Док-панель</h3>
+              <input class="route-input" id="tuneDockRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTuneDockRouteBtn">Копировать</button>
+                <button class="mini-btn" id="openTuneDockRouteBtn">Открыть</button>
+                <button class="mini-btn" id="openTuneDockDirectBtn">Открыть прямую</button>
               </div>
             </div>
           </div>
