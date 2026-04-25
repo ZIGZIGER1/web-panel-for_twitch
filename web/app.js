@@ -38,8 +38,11 @@ const els = {
   heroChatPill: document.getElementById("heroChatPill"),
   heroSignalPill: document.getElementById("heroSignalPill"),
   frameImage: document.getElementById("frameImage"),
+  framePreviewImages: Array.from(document.querySelectorAll("[data-frame-preview]")),
   micLevelValue: document.getElementById("micLevelValue"),
   micLevelFill: document.getElementById("micLevelFill"),
+  audioPreviewLevelValue: document.getElementById("audioPreviewLevelValue"),
+  audioPreviewLevelFill: document.getElementById("audioPreviewLevelFill"),
   thresholdValue: document.getElementById("thresholdValue"),
   tuneAutoThresholdValue: document.getElementById("tuneAutoThresholdValue"),
   tuneAutoFloorValue: document.getElementById("tuneAutoFloorValue"),
@@ -49,18 +52,33 @@ const els = {
   marginYValue: document.getElementById("marginYValue"),
   chatWidthPercentValue: document.getElementById("chatWidthPercentValue"),
   pulseBars: document.getElementById("pulseBars"),
-  workspaceLayout: document.getElementById("workspaceLayout"),
-  previewStack: document.getElementById("previewStack"),
+  audioPreviewBars: document.getElementById("audioPreviewBars"),
+  audioPreviewStatus: document.getElementById("audioPreviewStatus"),
+  audioPreviewDevice: document.getElementById("audioPreviewDevice"),
+  audioPreviewThreshold: document.getElementById("audioPreviewThreshold"),
+  audioPreviewSignal: document.getElementById("audioPreviewSignal"),
+  chatPreviewStatus: document.getElementById("chatPreviewStatus"),
+  chatPreviewFrame: document.getElementById("chatPreviewFrame"),
+  musicPreviewStatus: document.getElementById("musicPreviewStatus"),
+  musicPlayerFrame: document.getElementById("musicPlayerFrame"),
+  musicQueueFrame: document.getElementById("musicQueueFrame"),
+  musicDockRouteInput: document.getElementById("musicDockRouteInput"),
   openOverlayBtn: document.getElementById("openOverlayBtn"),
   copyOverlayBtn: document.getElementById("copyOverlayBtn"),
   openChatBtn: document.getElementById("openChatBtn"),
   copyChatBtn: document.getElementById("copyChatBtn"),
   openTuneHomeBtn: document.getElementById("openTuneHomeBtn"),
   openTuneDashboardBtn: document.getElementById("openTuneDashboardBtn"),
-  copyOverlayRouteBtn: document.getElementById("copyOverlayRouteBtn"),
-  openOverlayRouteBtn: document.getElementById("openOverlayRouteBtn"),
-  copyChatRouteBtn: document.getElementById("copyChatRouteBtn"),
-  openChatRouteBtn: document.getElementById("openChatRouteBtn"),
+  openTuneHomeInlineBtn: document.getElementById("openTuneHomeInlineBtn"),
+  openTuneDashboardInlineBtn: document.getElementById("openTuneDashboardInlineBtn"),
+  scenePreviewOpenBtn: document.getElementById("scenePreviewOpenBtn"),
+  scenePreviewCopyBtn: document.getElementById("scenePreviewCopyBtn"),
+  scenePreviewOpenChatBtn: document.getElementById("scenePreviewOpenChatBtn"),
+  scenePreviewCopyChatBtn: document.getElementById("scenePreviewCopyChatBtn"),
+  chatPreviewOpenBtn: document.getElementById("chatPreviewOpenBtn"),
+  chatPreviewCopyBtn: document.getElementById("chatPreviewCopyBtn"),
+  chatPreviewOpenSceneBtn: document.getElementById("chatPreviewOpenSceneBtn"),
+  chatPreviewCopySceneBtn: document.getElementById("chatPreviewCopySceneBtn"),
   tunePlayerRouteInput: document.getElementById("tunePlayerRouteInput"),
   tuneQueueRouteInput: document.getElementById("tuneQueueRouteInput"),
   tuneDockRouteInput: document.getElementById("tuneDockRouteInput"),
@@ -73,9 +91,21 @@ const els = {
   copyTuneDockRouteBtn: document.getElementById("copyTuneDockRouteBtn"),
   openTuneDockRouteBtn: document.getElementById("openTuneDockRouteBtn"),
   openTuneDockDirectBtn: document.getElementById("openTuneDockDirectBtn"),
+  musicPreviewOpenPlayerBtn: document.getElementById("musicPreviewOpenPlayerBtn"),
+  musicPreviewCopyPlayerBtn: document.getElementById("musicPreviewCopyPlayerBtn"),
+  musicPreviewCopyPlayerDirectBtn: document.getElementById("musicPreviewCopyPlayerDirectBtn"),
+  musicPreviewOpenQueueBtn: document.getElementById("musicPreviewOpenQueueBtn"),
+  musicPreviewCopyQueueBtn: document.getElementById("musicPreviewCopyQueueBtn"),
+  musicPreviewCopyQueueDirectBtn: document.getElementById("musicPreviewCopyQueueDirectBtn"),
+  musicPreviewOpenDockBtn: document.getElementById("musicPreviewOpenDockBtn"),
+  musicPreviewCopyDockBtn: document.getElementById("musicPreviewCopyDockBtn"),
   refreshDevicesBtn: document.getElementById("refreshDevicesBtn"),
   startAudioBtn: document.getElementById("startAudioBtn"),
   stopAudioBtn: document.getElementById("stopAudioBtn"),
+  audioPreviewStartBtn: document.getElementById("audioPreviewStartBtn"),
+  audioPreviewStopBtn: document.getElementById("audioPreviewStopBtn"),
+  audioPreviewRefreshBtn: document.getElementById("audioPreviewRefreshBtn"),
+  audioPreviewOpenSceneBtn: document.getElementById("audioPreviewOpenSceneBtn"),
 };
 
 const fieldMap = {
@@ -124,12 +154,14 @@ const viewDecks = Array.from(document.querySelectorAll(".view-deck"));
 const writeDebouncers = new Map();
 
 function ensureBars() {
-  if (els.pulseBars.children.length) return;
-  for (let i = 0; i < 18; i += 1) {
-    const bar = document.createElement("div");
-    bar.className = "pulse-bar";
-    els.pulseBars.appendChild(bar);
-  }
+  document.querySelectorAll("[data-pulse-bars], #pulseBars").forEach((container) => {
+    if (!container || container.children.length) return;
+    for (let i = 0; i < 18; i += 1) {
+      const bar = document.createElement("div");
+      bar.className = "pulse-bar";
+      container.appendChild(bar);
+    }
+  });
 }
 
 function setOptions(select, values, currentValue) {
@@ -243,17 +275,23 @@ function hydrateForm(settings, devices) {
   els.chatWidthPercentValue.textContent = `${Math.round(settings.chatWidthPercent)}%`;
 }
 
-function renderMeter(level) {
+function renderMeterShell(valueEl, fillEl, barsEl, level) {
+  if (!valueEl || !fillEl || !barsEl) return;
   const safeLevel = Math.max(0, Math.min(100, Number(level) || 0));
-  els.micLevelValue.textContent = `${Math.round(safeLevel)}%`;
-  els.micLevelFill.style.width = `${safeLevel}%`;
+  valueEl.textContent = `${Math.round(safeLevel)}%`;
+  fillEl.style.width = `${safeLevel}%`;
 
-  Array.from(els.pulseBars.children).forEach((bar, index) => {
+  Array.from(barsEl.children).forEach((bar, index) => {
     const wave = Math.sin(Date.now() / 180 + index * 0.55) * 0.5 + 0.5;
     const intensity = Math.min(1, safeLevel / 100 + wave * 0.22);
     bar.style.height = `${8 + intensity * 42}px`;
     bar.style.opacity = String(0.32 + intensity * 0.68);
   });
+}
+
+function renderMeter(level) {
+  renderMeterShell(els.micLevelValue, els.micLevelFill, els.pulseBars, level);
+  renderMeterShell(els.audioPreviewLevelValue, els.audioPreviewLevelFill, els.audioPreviewBars, level);
 }
 
 function applySignalSnapshot(payload = {}) {
@@ -281,6 +319,13 @@ function openUrl(url) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+function syncEmbedSource(frame, url) {
+  if (!frame || !url) return;
+  if (frame.dataset.src === url) return;
+  frame.dataset.src = url;
+  frame.src = url;
+}
+
 function applyView(view) {
   state.activeView = view;
   viewButtons.forEach((button) => {
@@ -292,10 +337,6 @@ function applyView(view) {
     const show = views.includes(view);
     deck.classList.toggle("is-hidden", !show);
   });
-
-  const homeView = view === "home";
-  els.previewStack.classList.toggle("is-hidden", !homeView);
-  els.workspaceLayout.classList.toggle("layout--single", !homeView);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -314,10 +355,12 @@ function pumpPreviewQueue() {
   const image = new Image();
   image.decoding = "async";
   image.onload = () => {
-    els.frameImage.style.opacity = "0.9";
-    els.frameImage.src = nextUrl;
-    requestAnimationFrame(() => {
-      els.frameImage.style.opacity = "1";
+    els.framePreviewImages.forEach((previewImage) => {
+      previewImage.style.opacity = "0.9";
+      previewImage.src = nextUrl;
+      requestAnimationFrame(() => {
+        previewImage.style.opacity = "1";
+      });
     });
     state.activePreviewUrl = nextUrl;
     state.previewLoading = false;
@@ -434,8 +477,15 @@ function applyState(data, { hydrateForm: shouldHydrate = false } = {}) {
   els.captureHint.textContent = data.status.captureHint;
   els.sceneMeta.textContent = data.status.sceneMeta;
   els.chatStatusText.textContent = data.status.chat;
+  els.chatPreviewStatus.textContent = data.status.chat;
   els.tuneStatusText.textContent = data.status.tune2live || "Tune2Live пока не подключен.";
+  els.musicPreviewStatus.textContent = data.status.tune2live || "Tune2Live пока не подключен.";
   els.audioStatusText.textContent = data.status.audio;
+  els.audioPreviewStatus.textContent = data.status.audio;
+  els.audioPreviewDevice.textContent = data.devices.selected || "Не выбрано";
+  els.audioPreviewThreshold.textContent = `${Math.round(data.settings.threshold)}`;
+  els.audioPreviewSignal.textContent = data.hero.signal;
+  els.musicDockRouteInput.value = data.routes.musicDock || "";
   els.obsHelpText.textContent = data.status.help;
   els.statusAudioLine.textContent = data.status.audio;
   els.statusChatLine.textContent = data.status.chat;
@@ -445,7 +495,13 @@ function applyState(data, { hydrateForm: shouldHydrate = false } = {}) {
 
   els.startAudioBtn.disabled = data.devices.running;
   els.stopAudioBtn.disabled = !data.devices.running;
+  els.audioPreviewStartBtn.disabled = data.devices.running;
+  els.audioPreviewStopBtn.disabled = !data.devices.running;
   renderMeter(data.devices.level);
+
+  syncEmbedSource(els.chatPreviewFrame, data.routes.chat);
+  syncEmbedSource(els.musicPlayerFrame, data.routes.musicPlayer);
+  syncEmbedSource(els.musicQueueFrame, data.routes.musicQueue);
 
   if (state.frameVersion !== data.frameVersion || !state.activePreviewUrl) {
     state.frameVersion = data.frameVersion;
@@ -532,27 +588,66 @@ function bindViews() {
 }
 
 function bindButtons() {
-  els.openOverlayBtn.addEventListener("click", () => openUrl(state.data?.routes.overlay));
-  els.copyOverlayBtn.addEventListener("click", () => copyText(state.data?.routes.overlay));
-  els.openChatBtn.addEventListener("click", () => openUrl(state.data?.routes.chat));
-  els.copyChatBtn.addEventListener("click", () => copyText(state.data?.routes.chat));
-  els.openTuneHomeBtn.addEventListener("click", () => openUrl(state.data?.routes.tuneHome));
-  els.openTuneDashboardBtn.addEventListener("click", () => openUrl(state.data?.routes.tuneDashboard));
-  els.copyOverlayRouteBtn.addEventListener("click", () => copyText(state.data?.routes.overlay));
-  els.openOverlayRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.overlay));
-  els.copyChatRouteBtn.addEventListener("click", () => copyText(state.data?.routes.chat));
-  els.openChatRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.chat));
-  els.copyTunePlayerRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicPlayer));
-  els.openTunePlayerRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicPlayer));
-  els.copyTunePlayerDirectBtn.addEventListener("click", () => copyText(state.data?.routes.musicPlayerDirect));
-  els.copyTuneQueueRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicQueue));
-  els.openTuneQueueRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicQueue));
-  els.copyTuneQueueDirectBtn.addEventListener("click", () => copyText(state.data?.routes.musicQueueDirect));
-  els.copyTuneDockRouteBtn.addEventListener("click", () => copyText(state.data?.routes.musicDock));
-  els.openTuneDockRouteBtn.addEventListener("click", () => openUrl(state.data?.routes.musicDock));
-  els.openTuneDockDirectBtn.addEventListener("click", () => openUrl(state.data?.routes.musicDockDirect || state.data?.routes.tuneDashboard));
+  const bindClick = (element, handler) => {
+    if (!element) return;
+    element.addEventListener("click", handler);
+  };
 
-  els.refreshDevicesBtn.addEventListener("click", async () => {
+  const runAudioAction = async (path, payload = {}) => {
+    try {
+      const data = await apiPost(path, payload);
+      applyState(data, { hydrateForm: true });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  bindClick(els.openOverlayBtn, () => openUrl(state.data?.routes.overlay));
+  bindClick(els.copyOverlayBtn, () => copyText(state.data?.routes.overlay));
+  bindClick(els.openChatBtn, () => openUrl(state.data?.routes.chat));
+  bindClick(els.copyChatBtn, () => copyText(state.data?.routes.chat));
+  bindClick(els.openTuneHomeBtn, () => openUrl(state.data?.routes.tuneHome));
+  bindClick(els.openTuneDashboardBtn, () => openUrl(state.data?.routes.tuneDashboard));
+  bindClick(els.openTuneHomeInlineBtn, () => openUrl(state.data?.routes.tuneHome));
+  bindClick(els.openTuneDashboardInlineBtn, () => openUrl(state.data?.routes.tuneDashboard));
+
+  bindClick(els.scenePreviewOpenBtn, () => openUrl(state.data?.routes.overlay));
+  bindClick(els.scenePreviewCopyBtn, () => copyText(state.data?.routes.overlay));
+  bindClick(els.scenePreviewOpenChatBtn, () => openUrl(state.data?.routes.chat));
+  bindClick(els.scenePreviewCopyChatBtn, () => copyText(state.data?.routes.chat));
+  bindClick(els.chatPreviewOpenBtn, () => openUrl(state.data?.routes.chat));
+  bindClick(els.chatPreviewCopyBtn, () => copyText(state.data?.routes.chat));
+  bindClick(els.chatPreviewOpenSceneBtn, () => openUrl(state.data?.routes.overlay));
+  bindClick(els.chatPreviewCopySceneBtn, () => copyText(state.data?.routes.overlay));
+
+  bindClick(els.copyTunePlayerRouteBtn, () => copyText(state.data?.routes.musicPlayer));
+  bindClick(els.openTunePlayerRouteBtn, () => openUrl(state.data?.routes.musicPlayer));
+  bindClick(els.copyTunePlayerDirectBtn, () => copyText(state.data?.routes.musicPlayerDirect));
+  bindClick(els.copyTuneQueueRouteBtn, () => copyText(state.data?.routes.musicQueue));
+  bindClick(els.openTuneQueueRouteBtn, () => openUrl(state.data?.routes.musicQueue));
+  bindClick(els.copyTuneQueueDirectBtn, () => copyText(state.data?.routes.musicQueueDirect));
+  bindClick(els.copyTuneDockRouteBtn, () => copyText(state.data?.routes.musicDock));
+  bindClick(els.openTuneDockRouteBtn, () => openUrl(state.data?.routes.musicDock));
+  bindClick(els.openTuneDockDirectBtn, () => openUrl(state.data?.routes.musicDockDirect || state.data?.routes.tuneDashboard));
+
+  bindClick(els.musicPreviewOpenPlayerBtn, () => openUrl(state.data?.routes.musicPlayer));
+  bindClick(els.musicPreviewCopyPlayerBtn, () => copyText(state.data?.routes.musicPlayer));
+  bindClick(els.musicPreviewCopyPlayerDirectBtn, () => copyText(state.data?.routes.musicPlayerDirect));
+  bindClick(els.musicPreviewOpenQueueBtn, () => openUrl(state.data?.routes.musicQueue));
+  bindClick(els.musicPreviewCopyQueueBtn, () => copyText(state.data?.routes.musicQueue));
+  bindClick(els.musicPreviewCopyQueueDirectBtn, () => copyText(state.data?.routes.musicQueueDirect));
+  bindClick(els.musicPreviewOpenDockBtn, () => openUrl(state.data?.routes.musicDock));
+  bindClick(els.musicPreviewCopyDockBtn, () => copyText(state.data?.routes.musicDock));
+
+  bindClick(els.refreshDevicesBtn, async () => {
+    try {
+      const data = await apiPost("/api/devices/refresh");
+      applyState(data, { hydrateForm: true });
+    } catch (error) {
+      console.error(error);
+    }
+  });
+  bindClick(els.audioPreviewRefreshBtn, async () => {
     try {
       const data = await apiPost("/api/devices/refresh");
       applyState(data, { hydrateForm: true });
@@ -561,23 +656,12 @@ function bindButtons() {
     }
   });
 
-  els.startAudioBtn.addEventListener("click", async () => {
-    try {
-      const data = await apiPost("/api/audio/start", { deviceLabel: fieldMap.deviceLabel.value });
-      applyState(data, { hydrateForm: true });
-    } catch (error) {
-      console.error(error);
-    }
-  });
+  bindClick(els.startAudioBtn, () => runAudioAction("/api/audio/start", { deviceLabel: fieldMap.deviceLabel.value }));
+  bindClick(els.audioPreviewStartBtn, () => runAudioAction("/api/audio/start", { deviceLabel: fieldMap.deviceLabel.value }));
+  bindClick(els.stopAudioBtn, () => runAudioAction("/api/audio/stop"));
+  bindClick(els.audioPreviewStopBtn, () => runAudioAction("/api/audio/stop"));
+  bindClick(els.audioPreviewOpenSceneBtn, () => openUrl(state.data?.routes.overlay));
 
-  els.stopAudioBtn.addEventListener("click", async () => {
-    try {
-      const data = await apiPost("/api/audio/stop");
-      applyState(data, { hydrateForm: true });
-    } catch (error) {
-      console.error(error);
-    }
-  });
 }
 
 async function boot() {

@@ -321,8 +321,8 @@
             <div class="field field--actions">
               <span>Быстрый доступ</span>
               <div class="inline-actions">
-                <button class="mini-btn" id="openTuneHomeBtn">Сайт</button>
-                <button class="mini-btn mini-btn--primary" id="openTuneDashboardBtn">Панель</button>
+                <button class="mini-btn" id="openTuneHomeInlineBtn">Сайт</button>
+                <button class="mini-btn mini-btn--primary" id="openTuneDashboardInlineBtn">Панель</button>
               </div>
             </div>
           </div>
@@ -462,12 +462,12 @@
       </section>
 
       <section class="preview-stack" id="previewStack">
-        <article class="deck deck--preview view-deck" data-view="home">
+        <article class="deck deck--preview view-deck" data-view="home scene">
           <div class="deck__art deck__art--preview"></div>
           <div class="deck__head deck__head--spread">
             <div>
               <p class="eyebrow">Живой монитор</p>
-              <h2>Предпросмотр web-проекта</h2>
+              <h2>Предпросмотр сцены</h2>
             </div>
             <div class="preview-route-chips">
               <div class="route-chip">
@@ -488,7 +488,7 @@
             <div class="preview-checker"></div>
             <div class="preview-beam preview-beam--left"></div>
             <div class="preview-beam preview-beam--right"></div>
-            <img id="frameImage" alt="preview">
+            <img id="frameImage" data-frame-preview alt="preview">
             <div class="preview-overlay">
               <div class="preview-pill" id="heroScenePill">Сцена</div>
               <div class="preview-pill preview-pill--ghost" id="heroChatPill">Чат</div>
@@ -496,25 +496,146 @@
             </div>
           </div>
 
+          <div class="action-grid">
+            <button class="action-btn action-btn--primary" id="scenePreviewOpenBtn">Открыть сцену</button>
+            <button class="action-btn" id="scenePreviewCopyBtn">Копировать адрес сцены</button>
+            <button class="action-btn" id="scenePreviewOpenChatBtn">Открыть чат</button>
+            <button class="action-btn" id="scenePreviewCopyChatBtn">Копировать адрес чата</button>
+          </div>
+
           <div class="route-grid">
             <div class="route-card route-card--cyan">
               <p class="eyebrow">Адрес сцены</p>
               <h3>Чистый Browser Source</h3>
               <input class="route-input" id="overlayRouteInput" readonly>
-              <div class="inline-actions">
-                <button class="mini-btn mini-btn--primary" id="copyOverlayRouteBtn">Копировать</button>
-                <button class="mini-btn" id="openOverlayRouteBtn">Открыть</button>
-              </div>
             </div>
             <div class="route-card route-card--pink">
               <p class="eyebrow">Адрес чата</p>
               <h3>Chat Source</h3>
               <input class="route-input" id="chatRouteInput" readonly>
-              <div class="inline-actions">
-                <button class="mini-btn mini-btn--primary" id="copyChatRouteBtn">Копировать</button>
-                <button class="mini-btn" id="openChatRouteBtn">Открыть</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="deck deck--preview view-deck" data-view="chat">
+          <div class="deck__art deck__art--preview"></div>
+          <div class="deck__head deck__head--spread">
+            <div>
+              <p class="eyebrow">Живой чат</p>
+              <h2>Предпросмотр чата</h2>
+            </div>
+            <div class="route-chip route-chip--pink">
+              <span>Статус</span>
+              <strong id="chatPreviewStatus">Чат не подключен</strong>
+            </div>
+          </div>
+
+          <p class="deck-lead">Здесь видно, как чат будет выглядеть в OBS и когда он появляется на экране.</p>
+
+          <div class="preview-frame preview-frame--embed">
+            <iframe class="preview-frame__embed" id="chatPreviewFrame" title="Предпросмотр чата" loading="lazy"></iframe>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-btn action-btn--primary" id="chatPreviewOpenBtn">Открыть чат</button>
+            <button class="action-btn" id="chatPreviewCopyBtn">Копировать адрес чата</button>
+            <button class="action-btn" id="chatPreviewOpenSceneBtn">Открыть сцену</button>
+            <button class="action-btn" id="chatPreviewCopySceneBtn">Копировать адрес сцены</button>
+          </div>
+        </article>
+
+        <article class="deck deck--preview view-deck" data-view="music">
+          <div class="deck__art deck__art--preview"></div>
+          <div class="deck__head deck__head--spread">
+            <div>
+              <p class="eyebrow">Музыка и очередь</p>
+              <h2>Предпросмотр Tune2Live</h2>
+            </div>
+            <div class="route-chip">
+              <span>Режим</span>
+              <strong id="musicPreviewStatus">Tune2Live не подключен</strong>
+            </div>
+          </div>
+
+          <p class="deck-lead">Локальные маршруты уже готовы для OBS, а здесь видно плеер и очередь без выхода из панели.</p>
+
+          <div class="dual-preview">
+            <div class="preview-slot">
+              <p class="eyebrow">Плеер</p>
+              <div class="preview-frame preview-frame--embed preview-frame--compact">
+                <iframe class="preview-frame__embed" id="musicPlayerFrame" title="Предпросмотр плеера Tune2Live" loading="lazy"></iframe>
               </div>
             </div>
+            <div class="preview-slot">
+              <p class="eyebrow">Очередь</p>
+              <div class="preview-frame preview-frame--embed preview-frame--compact">
+                <iframe class="preview-frame__embed" id="musicQueueFrame" title="Предпросмотр очереди Tune2Live" loading="lazy"></iframe>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-grid action-grid--triple">
+            <button class="action-btn action-btn--primary" id="musicPreviewOpenPlayerBtn">Открыть плеер</button>
+            <button class="action-btn" id="musicPreviewCopyPlayerBtn">Копировать адрес плеера</button>
+            <button class="action-btn" id="musicPreviewCopyPlayerDirectBtn">Копировать прямую ссылку</button>
+            <button class="action-btn action-btn--primary" id="musicPreviewOpenQueueBtn">Открыть очередь</button>
+            <button class="action-btn" id="musicPreviewCopyQueueBtn">Копировать адрес очереди</button>
+            <button class="action-btn" id="musicPreviewCopyQueueDirectBtn">Копировать прямую ссылку</button>
+          </div>
+
+          <div class="route-card">
+            <p class="eyebrow">Док-панель</p>
+            <h3>Отдельный маршрут управления</h3>
+            <input class="route-input" id="musicDockRouteInput" readonly>
+            <div class="action-grid">
+              <button class="action-btn action-btn--primary" id="musicPreviewOpenDockBtn">Открыть док-панель</button>
+              <button class="action-btn" id="musicPreviewCopyDockBtn">Копировать адрес док-панели</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="deck deck--preview view-deck" data-view="audio">
+          <div class="deck__art deck__art--preview"></div>
+          <div class="deck__head deck__head--spread">
+            <div>
+              <p class="eyebrow">Аудиомонитор</p>
+              <h2>Предпросмотр микрофона</h2>
+            </div>
+            <div class="route-chip route-chip--pink">
+              <span>Устройство</span>
+              <strong id="audioPreviewDevice">Не выбрано</strong>
+            </div>
+          </div>
+
+          <p class="deck-lead" id="audioPreviewStatus">Микрофон пока остановлен.</p>
+
+          <div class="meter-shell meter-shell--preview">
+            <div class="meter-shell__head">
+              <span>Текущий уровень</span>
+              <strong id="audioPreviewLevelValue">0%</strong>
+            </div>
+            <div class="meter">
+              <div class="meter__fill" id="audioPreviewLevelFill"></div>
+            </div>
+            <div class="pulse-bars" id="audioPreviewBars" data-pulse-bars></div>
+          </div>
+
+          <div class="audio-readout-grid">
+            <div class="route-card">
+              <p class="eyebrow">Порог речи</p>
+              <h3 id="audioPreviewThreshold">12</h3>
+            </div>
+            <div class="route-card">
+              <p class="eyebrow">Сигнал</p>
+              <h3 id="audioPreviewSignal">МИК ВЫКЛ</h3>
+            </div>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-btn action-btn--primary" id="audioPreviewStartBtn">Старт микрофона</button>
+            <button class="action-btn" id="audioPreviewStopBtn">Стоп микрофона</button>
+            <button class="action-btn" id="audioPreviewRefreshBtn">Обновить устройства</button>
+            <button class="action-btn" id="audioPreviewOpenSceneBtn">Открыть сцену</button>
           </div>
         </article>
 
