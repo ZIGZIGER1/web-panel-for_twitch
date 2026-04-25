@@ -67,9 +67,17 @@
       </article>
     </section>
 
-    <main class="layout">
+    <section class="workspace-nav" id="workspaceNav">
+      <button class="view-pill is-active" data-view-btn="home">Главная</button>
+      <button class="view-pill" data-view-btn="scene">Сцена</button>
+      <button class="view-pill" data-view-btn="chat">Чат</button>
+      <button class="view-pill" data-view-btn="music">Tune2Live</button>
+      <button class="view-pill" data-view-btn="audio">Аудио</button>
+    </section>
+
+    <main class="layout" id="workspaceLayout">
       <section class="control-stack">
-        <article class="deck deck--featured">
+        <article class="deck deck--featured view-deck" data-view="home scene">
           <div class="deck__art deck__art--featured"></div>
           <div class="deck__head">
             <div>
@@ -97,7 +105,7 @@
           <p class="support-text" id="presetNote">Подбираем лучший пакет.</p>
         </article>
 
-        <article class="deck">
+        <article class="deck view-deck" data-view="scene">
           <div class="deck__head">
             <div>
               <p class="eyebrow">Персонаж</p>
@@ -124,7 +132,7 @@
           </div>
         </article>
 
-        <article class="deck">
+        <article class="deck view-deck" data-view="scene">
           <div class="deck__head">
             <div>
               <p class="eyebrow">Сцена</p>
@@ -207,7 +215,7 @@
           </div>
         </article>
 
-        <article class="deck">
+        <article class="deck view-deck" data-view="chat">
           <div class="deck__head">
             <div>
               <p class="eyebrow">Чат Twitch</p>
@@ -274,7 +282,7 @@
           <p class="support-text" id="chatStatusText">Вставь канал Twitch, ссылку на канал или чат Twitch.</p>
         </article>
 
-        <article class="deck">
+        <article class="deck view-deck" data-view="music">
           <div class="deck__head">
             <div>
               <p class="eyebrow">Tune2Live</p>
@@ -301,10 +309,109 @@
             </label>
           </div>
 
+          <div class="field-grid field-grid--double">
+            <label class="field">
+              <span>Автореакция по микрофону</span>
+              <select data-setting="tuneAutoMode" id="tuneAutoMode">
+                <option value="off">Выключена</option>
+                <option value="dim">Приглушать виджет</option>
+                <option value="hide">Скрывать при речи</option>
+              </select>
+            </label>
+            <div class="field field--actions">
+              <span>Быстрый доступ</span>
+              <div class="inline-actions">
+                <button class="mini-btn" id="openTuneHomeBtn">Сайт</button>
+                <button class="mini-btn mini-btn--primary" id="openTuneDashboardBtn">Панель</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="slider-group">
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Порог реакции</span>
+                <strong id="tuneAutoThresholdValue">18</strong>
+              </div>
+              <input type="range" min="1" max="60" step="1" data-setting="tuneAutoThreshold" id="tuneAutoThreshold">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Остаточная видимость</span>
+                <strong id="tuneAutoFloorValue">35%</strong>
+              </div>
+              <input type="range" min="0" max="100" step="1" data-setting="tuneAutoFloor" id="tuneAutoFloor">
+            </label>
+            <label class="slider-field">
+              <div class="slider-field__head">
+                <span>Задержка возврата</span>
+                <strong id="tuneAutoReleaseValue">0.9 c</strong>
+              </div>
+              <input type="range" min="200" max="3000" step="100" data-setting="tuneAutoReleaseMs" id="tuneAutoReleaseMs">
+            </label>
+          </div>
+
+          <div class="toggle-grid">
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="tuneAutoPlayer" id="tuneAutoPlayer">
+              <div>
+                <strong>Реакция плеера</strong>
+                <span>Авторежим применяется к музыкальному плееру в OBS</span>
+              </div>
+            </label>
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="tuneAutoQueue" id="tuneAutoQueue">
+              <div>
+                <strong>Реакция очереди</strong>
+                <span>Очередь заказов тоже приглушается или скрывается при речи</span>
+              </div>
+            </label>
+            <label class="toggle-card">
+              <input type="checkbox" data-setting="tuneAutoDock" id="tuneAutoDock">
+              <div>
+                <strong>Реакция док-панели</strong>
+                <span>Если открываешь док-панель отдельно, она тоже будет реагировать на голос</span>
+              </div>
+            </label>
+          </div>
+
           <p class="support-text" id="tuneStatusText">Tune2Live пока не подключен.</p>
+
+          <div class="music-grid">
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Плеер для OBS</h3>
+              <input class="route-input" id="tunePlayerRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTunePlayerRouteBtn">Копировать OBS</button>
+                <button class="mini-btn" id="openTunePlayerRouteBtn">Открыть</button>
+                <button class="mini-btn" id="copyTunePlayerDirectBtn">Прямая ссылка</button>
+              </div>
+            </div>
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Очередь заказов</h3>
+              <input class="route-input" id="tuneQueueRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTuneQueueRouteBtn">Копировать OBS</button>
+                <button class="mini-btn" id="openTuneQueueRouteBtn">Открыть</button>
+                <button class="mini-btn" id="copyTuneQueueDirectBtn">Прямая ссылка</button>
+              </div>
+            </div>
+            <div class="route-card music-card">
+              <p class="eyebrow">Tune2Live</p>
+              <h3>Док-панель</h3>
+              <input class="route-input" id="tuneDockRouteInput" readonly>
+              <div class="inline-actions">
+                <button class="mini-btn mini-btn--primary" id="copyTuneDockRouteBtn">Копировать</button>
+                <button class="mini-btn" id="openTuneDockRouteBtn">Открыть</button>
+                <button class="mini-btn" id="openTuneDockDirectBtn">Открыть прямую</button>
+              </div>
+            </div>
+          </div>
         </article>
 
-        <article class="deck">
+        <article class="deck view-deck" data-view="audio">
           <div class="deck__head">
             <div>
               <p class="eyebrow">Аудио</p>
@@ -354,8 +461,8 @@
         </article>
       </section>
 
-      <section class="preview-stack">
-        <article class="deck deck--preview">
+      <section class="preview-stack" id="previewStack">
+        <article class="deck deck--preview view-deck" data-view="home">
           <div class="deck__art deck__art--preview"></div>
           <div class="deck__head deck__head--spread">
             <div>
@@ -409,42 +516,9 @@
               </div>
             </div>
           </div>
-
-          <div class="music-grid">
-            <div class="route-card music-card">
-              <p class="eyebrow">Tune2Live</p>
-              <h3>Плеер для OBS</h3>
-              <input class="route-input" id="tunePlayerRouteInput" readonly>
-              <div class="inline-actions">
-                <button class="mini-btn mini-btn--primary" id="copyTunePlayerRouteBtn">Копировать OBS</button>
-                <button class="mini-btn" id="openTunePlayerRouteBtn">Открыть</button>
-                <button class="mini-btn" id="copyTunePlayerDirectBtn">Прямая ссылка</button>
-              </div>
-            </div>
-            <div class="route-card music-card">
-              <p class="eyebrow">Tune2Live</p>
-              <h3>Очередь заказов</h3>
-              <input class="route-input" id="tuneQueueRouteInput" readonly>
-              <div class="inline-actions">
-                <button class="mini-btn mini-btn--primary" id="copyTuneQueueRouteBtn">Копировать OBS</button>
-                <button class="mini-btn" id="openTuneQueueRouteBtn">Открыть</button>
-                <button class="mini-btn" id="copyTuneQueueDirectBtn">Прямая ссылка</button>
-              </div>
-            </div>
-            <div class="route-card music-card">
-              <p class="eyebrow">Tune2Live</p>
-              <h3>Док-панель</h3>
-              <input class="route-input" id="tuneDockRouteInput" readonly>
-              <div class="inline-actions">
-                <button class="mini-btn mini-btn--primary" id="copyTuneDockRouteBtn">Копировать</button>
-                <button class="mini-btn" id="openTuneDockRouteBtn">Открыть</button>
-                <button class="mini-btn" id="openTuneDockDirectBtn">Открыть прямую</button>
-              </div>
-            </div>
-          </div>
         </article>
 
-        <article class="deck deck--support">
+        <article class="deck deck--support view-deck" data-view="home">
           <div class="support-grid">
             <section class="support-card">
               <p class="eyebrow">Подсказка</p>

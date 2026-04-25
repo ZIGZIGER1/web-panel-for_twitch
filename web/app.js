@@ -2,6 +2,7 @@ const state = {
   data: null,
   frameVersion: -1,
   hydrated: false,
+  activeView: "home",
   previewLoading: false,
   pendingPreviewUrl: "",
   activePreviewUrl: "",
@@ -40,11 +41,16 @@ const els = {
   micLevelValue: document.getElementById("micLevelValue"),
   micLevelFill: document.getElementById("micLevelFill"),
   thresholdValue: document.getElementById("thresholdValue"),
+  tuneAutoThresholdValue: document.getElementById("tuneAutoThresholdValue"),
+  tuneAutoFloorValue: document.getElementById("tuneAutoFloorValue"),
+  tuneAutoReleaseValue: document.getElementById("tuneAutoReleaseValue"),
   scalePercentValue: document.getElementById("scalePercentValue"),
   marginXValue: document.getElementById("marginXValue"),
   marginYValue: document.getElementById("marginYValue"),
   chatWidthPercentValue: document.getElementById("chatWidthPercentValue"),
   pulseBars: document.getElementById("pulseBars"),
+  workspaceLayout: document.getElementById("workspaceLayout"),
+  previewStack: document.getElementById("previewStack"),
   openOverlayBtn: document.getElementById("openOverlayBtn"),
   copyOverlayBtn: document.getElementById("copyOverlayBtn"),
   openChatBtn: document.getElementById("openChatBtn"),
@@ -96,6 +102,13 @@ const fieldMap = {
   tunePlayerUrl: document.getElementById("tunePlayerUrl"),
   tuneQueueUrl: document.getElementById("tuneQueueUrl"),
   tuneDockUrl: document.getElementById("tuneDockUrl"),
+  tuneAutoMode: document.getElementById("tuneAutoMode"),
+  tuneAutoThreshold: document.getElementById("tuneAutoThreshold"),
+  tuneAutoFloor: document.getElementById("tuneAutoFloor"),
+  tuneAutoReleaseMs: document.getElementById("tuneAutoReleaseMs"),
+  tuneAutoPlayer: document.getElementById("tuneAutoPlayer"),
+  tuneAutoQueue: document.getElementById("tuneAutoQueue"),
+  tuneAutoDock: document.getElementById("tuneAutoDock"),
   chatStyle: document.getElementById("chatStyle"),
   chatSide: document.getElementById("chatSide"),
   chatWidthPercent: document.getElementById("chatWidthPercent"),
@@ -104,6 +117,9 @@ const fieldMap = {
   deviceLabel: document.getElementById("deviceLabel"),
   threshold: document.getElementById("threshold"),
 };
+
+const viewButtons = Array.from(document.querySelectorAll("[data-view-btn]"));
+const viewDecks = Array.from(document.querySelectorAll(".view-deck"));
 
 const writeDebouncers = new Map();
 
@@ -202,6 +218,13 @@ function hydrateForm(settings, devices) {
   fieldMap.tunePlayerUrl.value = settings.tunePlayerUrl || "";
   fieldMap.tuneQueueUrl.value = settings.tuneQueueUrl || "";
   fieldMap.tuneDockUrl.value = settings.tuneDockUrl || "";
+  fieldMap.tuneAutoMode.value = settings.tuneAutoMode || "off";
+  fieldMap.tuneAutoThreshold.value = settings.tuneAutoThreshold ?? 18;
+  fieldMap.tuneAutoFloor.value = settings.tuneAutoFloor ?? 35;
+  fieldMap.tuneAutoReleaseMs.value = settings.tuneAutoReleaseMs ?? 900;
+  fieldMap.tuneAutoPlayer.checked = Boolean(settings.tuneAutoPlayer);
+  fieldMap.tuneAutoQueue.checked = Boolean(settings.tuneAutoQueue);
+  fieldMap.tuneAutoDock.checked = Boolean(settings.tuneAutoDock);
   fieldMap.chatStyle.value = settings.chatStyle;
   fieldMap.chatSide.value = settings.chatSide;
   fieldMap.chatWidthPercent.value = settings.chatWidthPercent;
@@ -211,6 +234,9 @@ function hydrateForm(settings, devices) {
   fieldMap.deviceLabel.value = devices.selected || "";
 
   els.thresholdValue.textContent = Math.round(settings.threshold);
+  els.tuneAutoThresholdValue.textContent = `${Math.round(settings.tuneAutoThreshold ?? 18)}`;
+  els.tuneAutoFloorValue.textContent = `${Math.round(settings.tuneAutoFloor ?? 35)}%`;
+  els.tuneAutoReleaseValue.textContent = `${((settings.tuneAutoReleaseMs ?? 900) / 1000).toFixed(1)} c`;
   els.scalePercentValue.textContent = `${Math.round(settings.scalePercent)}%`;
   els.marginXValue.textContent = `${Math.round(settings.marginX)} px`;
   els.marginYValue.textContent = `${Math.round(settings.marginY)} px`;
@@ -253,6 +279,24 @@ function copyText(text) {
 function openUrl(url) {
   if (!url) return;
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function applyView(view) {
+  state.activeView = view;
+  viewButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.viewBtn === view);
+  });
+
+  viewDecks.forEach((deck) => {
+    const views = String(deck.dataset.view || "").split(/\s+/).filter(Boolean);
+    const show = views.includes(view);
+    deck.classList.toggle("is-hidden", !show);
+  });
+
+  const homeView = view === "home";
+  els.previewStack.classList.toggle("is-hidden", !homeView);
+  els.workspaceLayout.classList.toggle("layout--single", !homeView);
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function buildPreviewUrl(sessionId, frameVersion) {
@@ -465,6 +509,9 @@ function bindInputs() {
       if (key === "marginY") els.marginYValue.textContent = `${Math.round(Number(value))} px`;
       if (key === "chatWidthPercent") els.chatWidthPercentValue.textContent = `${Math.round(Number(value))}%`;
       if (key === "threshold") els.thresholdValue.textContent = `${Math.round(Number(value))}`;
+      if (key === "tuneAutoThreshold") els.tuneAutoThresholdValue.textContent = `${Math.round(Number(value))}`;
+      if (key === "tuneAutoFloor") els.tuneAutoFloorValue.textContent = `${Math.round(Number(value))}%`;
+      if (key === "tuneAutoReleaseMs") els.tuneAutoReleaseValue.textContent = `${(Number(value) / 1000).toFixed(1)} c`;
       scheduleWrite(key, value, isRange ? 90 : 140);
     });
 
@@ -473,6 +520,14 @@ function bindInputs() {
         scheduleWrite(key, element.value, 0);
       });
     }
+  });
+}
+
+function bindViews() {
+  viewButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      applyView(button.dataset.viewBtn || "home");
+    });
   });
 }
 
@@ -527,9 +582,11 @@ function bindButtons() {
 
 async function boot() {
   ensureBars();
+  bindViews();
   bindInputs();
   bindButtons();
   await refreshState({ hydrateForm: true });
+  applyView(state.activeView);
   scheduleLiveRefresh(document.hidden ? 180 : 90);
   scheduleStateRefresh(document.hidden ? 1400 : 900);
   document.addEventListener("visibilitychange", () => {

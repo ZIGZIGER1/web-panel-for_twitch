@@ -56,20 +56,10 @@ class StaticResponse:
     content_type: str
 
 
-def build_tune2live_embed_html(title: str, target_url: str) -> str:
+def build_tune2live_embed_html(title: str, target_url: str, kind: str) -> str:
     safe_title = escape(title)
     safe_target = escape(target_url, quote=True)
-    has_target = bool(target_url)
-    body = (
-        f'<iframe class="music-frame" src="{safe_target}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-read; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>'
-        if has_target
-        else (
-            '<div class="music-empty">'
-            f"<strong>{safe_title}</strong>"
-            "<span>Сначала добавь ссылку Tune2Live в панели управления.</span>"
-            "</div>"
-        )
-    )
+    safe_kind = escape(kind, quote=True)
     return f"""<!doctype html>
 <html lang="ru">
 <head>
@@ -98,11 +88,34 @@ def build_tune2live_embed_html(title: str, target_url: str) -> str:
       overflow: hidden;
       background: transparent;
     }}
+    .music-shell {{
+      position: absolute;
+      inset: 0;
+      transition:
+        opacity 220ms ease,
+        transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 220ms ease;
+      transform-origin: center center;
+    }}
     .music-frame {{
       width: 100%;
       height: 100%;
       border: 0;
       background: transparent;
+      transition:
+        opacity 220ms ease,
+        transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 220ms ease;
+    }}
+    .music-mask {{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        radial-gradient(circle at top left, rgba(116, 231, 255, 0.12), transparent 32%),
+        linear-gradient(180deg, rgba(3, 7, 12, 0.26), rgba(3, 7, 12, 0.72));
+      transition: opacity 220ms ease;
     }}
     .music-empty {{
       position: absolute;
@@ -123,10 +136,153 @@ def build_tune2live_embed_html(title: str, target_url: str) -> str:
       max-width: 420px;
       line-height: 1.5;
     }}
+    .music-shell.engaged.dim .music-frame {{
+      opacity: var(--music-floor, 0.35);
+      transform: scale(0.992);
+      filter: saturate(0.72) brightness(0.72);
+    }}
+    .music-shell.engaged.dim .music-mask {{
+      opacity: 0.38;
+    }}
+    .music-shell.engaged.hide .music-frame {{
+      opacity: 0.02;
+      transform: scale(0.985) translateY(10px);
+      filter: blur(6px) brightness(0.45);
+    }}
+    .music-shell.engaged.hide .music-mask {{
+      opacity: 0.7;
+    }}
+    .music-shell.idle .music-mask {{
+      opacity: 0;
+    }}
   </style>
 </head>
 <body>
-  <div class="music-stage">{body}</div>
+  <div class="music-stage">
+    <div class="music-shell idle" id="musicShell" style="--music-floor:0.35;">
+      <iframe id="musicFrame" class="music-frame" src="{safe_target}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-read; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="music-mask" id="musicMask"></div>
+      <div class="music-empty" id="musicEmpty">
+        <strong>{safe_title}</strong>
+        <span>Сначала добавь ссылку Tune2Live в панели управления.</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    const KIND = "{safe_kind}";
+    const frame = document.getElementById("musicFrame");
+    const shell = document.getElementById("musicShell");
+    const empty = document.getElementById("musicEmpty");
+    const state = {{
+      target: "{safe_target}",
+      mode: "off",
+      threshold: 18,
+      floor: 0.35,
+      releaseMs: 900,
+      enabled: false,
+      level: 0,
+      monitorRunning: false,
+      lastTrigger: 0,
+      eventSource: null,
+      configTimer: null,
+      tickTimer: null,
+    }};
+
+    function targetKey() {{
+      return KIND === "player" ? "musicPlayerDirect" : (KIND === "queue" ? "musicQueueDirect" : "musicDockDirect");
+    }}
+
+    function enabledKey(settings) {{
+      if (KIND === "player") return Boolean(settings.tuneAutoPlayer);
+      if (KIND === "queue") return Boolean(settings.tuneAutoQueue);
+      return Boolean(settings.tuneAutoDock);
+    }}
+
+    function updateFrameTarget(nextTarget) {{
+      const safeTarget = String(nextTarget || "").trim();
+      state.target = safeTarget;
+      if (safeTarget && frame.dataset.target !== safeTarget) {{
+        frame.src = safeTarget;
+        frame.dataset.target = safeTarget;
+      }}
+      if (!safeTarget) frame.dataset.target = "";
+      const hasTarget = Boolean(safeTarget);
+      frame.style.display = hasTarget ? "block" : "none";
+      empty.style.display = hasTarget ? "none" : "grid";
+    }}
+
+    function applyVisualState() {{
+      const engaged = state.enabled
+        && state.monitorRunning
+        && state.mode !== "off"
+        && Boolean(state.target)
+        && (state.level >= state.threshold || (Date.now() - state.lastTrigger) < state.releaseMs);
+
+      shell.style.setProperty("--music-floor", String(Math.max(0, Math.min(1, state.floor))));
+      shell.classList.remove("dim", "hide", "engaged", "idle");
+
+      if (engaged) {{
+        shell.classList.add("engaged", state.mode);
+      }} else {{
+        shell.classList.add("idle");
+      }}
+    }}
+
+    async function pullConfig() {{
+      try {{
+        const response = await fetch("/api/state", {{ cache: "no-store" }});
+        if (!response.ok) return;
+        const data = await response.json();
+        const settings = data.settings || {{}};
+        const routes = data.routes || {{}};
+        state.mode = String(settings.tuneAutoMode || "off");
+        state.threshold = Number(settings.tuneAutoThreshold || 18);
+        state.floor = Number(settings.tuneAutoFloor || 35) / 100;
+        state.releaseMs = Number(settings.tuneAutoReleaseMs || 900);
+        state.enabled = enabledKey(settings);
+        updateFrameTarget(routes[targetKey()] || "");
+        applyVisualState();
+      }} catch (error) {{
+        console.error(error);
+      }}
+    }}
+
+    function connectEvents() {{
+      if (state.eventSource) {{
+        try {{ state.eventSource.close(); }} catch (error) {{ console.error(error); }}
+      }}
+      const source = new EventSource("/api/events");
+      state.eventSource = source;
+
+      const handleSignal = (event) => {{
+        try {{
+          const payload = JSON.parse(event.data || "{{}}");
+          state.level = Number(payload.audioLevel || 0);
+          state.monitorRunning = Boolean(payload.monitorRunning);
+          if (state.level >= state.threshold) {{
+            state.lastTrigger = Date.now();
+          }}
+          applyVisualState();
+        }} catch (error) {{
+          console.error(error);
+        }}
+      }};
+
+      source.addEventListener("hello", handleSignal);
+      source.addEventListener("signal", handleSignal);
+      source.onerror = () => {{
+        try {{ source.close(); }} catch (error) {{ console.error(error); }}
+        state.eventSource = null;
+        setTimeout(connectEvents, 1000);
+      }};
+    }}
+
+    updateFrameTarget(state.target);
+    pullConfig();
+    connectEvents();
+    state.configTimer = setInterval(pullConfig, 1600);
+    state.tickTimer = setInterval(applyVisualState, 120);
+  </script>
 </body>
 </html>"""
 
@@ -189,6 +345,13 @@ class WebRuntime:
         self.tune_player_url = ""
         self.tune_queue_url = ""
         self.tune_dock_url = ""
+        self.tune_auto_mode = "off"
+        self.tune_auto_threshold = 18.0
+        self.tune_auto_floor = 35.0
+        self.tune_auto_release_ms = 900
+        self.tune_auto_player = True
+        self.tune_auto_queue = True
+        self.tune_auto_dock = False
         self.internet_pack = "Ночной грид"
         self.stream_moment = "Геймплей"
         self.preset_note = ""
@@ -410,6 +573,11 @@ class WebRuntime:
             self.tune_player_url = normalize_tune2live_url(self.tune_player_url)
             self.tune_queue_url = normalize_tune2live_url(self.tune_queue_url)
             self.tune_dock_url = normalize_tune2live_url(self.tune_dock_url)
+            self.tune_auto_threshold = clamp(float(self.tune_auto_threshold), 1.0, 60.0)
+            self.tune_auto_floor = clamp(float(self.tune_auto_floor), 0.0, 100.0)
+            self.tune_auto_release_ms = int(clamp(float(self.tune_auto_release_ms), 200.0, 3000.0))
+            if self.tune_auto_mode not in {"off", "dim", "hide"}:
+                self.tune_auto_mode = "off"
 
             connected_parts: list[str] = []
             if self.tune_player_url:
@@ -419,10 +587,33 @@ class WebRuntime:
             if self.tune_dock_url:
                 connected_parts.append("док-панель")
 
+            auto_parts: list[str] = []
+            if self.tune_auto_player:
+                auto_parts.append("плеер")
+            if self.tune_auto_queue:
+                auto_parts.append("очередь")
+            if self.tune_auto_dock:
+                auto_parts.append("док-панель")
+
+            mode_title = {
+                "off": "авторежим выключен",
+                "dim": "авторежим: приглушать виджет",
+                "hide": "авторежим: скрывать при речи",
+            }[self.tune_auto_mode]
+
             if connected_parts:
+                auto_text = mode_title
+                if self.tune_auto_mode != "off" and auto_parts:
+                    auto_text += (
+                        f" · порог {self.tune_auto_threshold:.0f}"
+                        f" · возврат {self.tune_auto_release_ms / 1000:.1f} c"
+                        f" · цели: {', '.join(auto_parts)}"
+                    )
                 self.tune_status = (
                     "Tune2Live подключен: "
                     + ", ".join(connected_parts)
+                    + ". "
+                    + auto_text
                     + ". Для OBS можешь использовать локальные маршруты ниже или прямые ссылки самого сервиса."
                 )
             else:
@@ -457,6 +648,13 @@ class WebRuntime:
                 "tunePlayerUrl": self.tune_player_url,
                 "tuneQueueUrl": self.tune_queue_url,
                 "tuneDockUrl": self.tune_dock_url,
+                "tuneAutoMode": self.tune_auto_mode,
+                "tuneAutoThreshold": round(self.tune_auto_threshold, 1),
+                "tuneAutoFloor": round(self.tune_auto_floor, 1),
+                "tuneAutoReleaseMs": int(self.tune_auto_release_ms),
+                "tuneAutoPlayer": self.tune_auto_player,
+                "tuneAutoQueue": self.tune_auto_queue,
+                "tuneAutoDock": self.tune_auto_dock,
                 "threshold": round(self.threshold, 1),
                 "deviceLabel": self.device_label,
                 "imageIdle": self.image_paths["idle"],
@@ -588,6 +786,18 @@ class WebRuntime:
             if self.tune_dock_url:
                 help_lines.append(f"{next_step}. Tune2Live док-панель: {self.music_dock_url or 'появится после старта'}")
                 next_step += 1
+            if self.tune_auto_mode != "off":
+                targets: list[str] = []
+                if self.tune_auto_player:
+                    targets.append("плеер")
+                if self.tune_auto_queue:
+                    targets.append("очередь")
+                if self.tune_auto_dock:
+                    targets.append("док-панель")
+                if targets:
+                    help_lines.append(
+                        f"{next_step}. Автореакция Tune2Live: режим {self.tune_auto_mode}, порог {self.tune_auto_threshold:.0f}, возврат {self.tune_auto_release_ms / 1000:.1f} c, цели: {', '.join(targets)}"
+                    )
 
             self.obs_help = "\n".join(help_lines)
 
@@ -755,6 +965,20 @@ class WebRuntime:
                 if raw and not normalized:
                     tune_validation_error = "Для Tune2Live поддерживаются только прямые ссылки tune2live.com."
                 self.tune_dock_url = normalized
+            if "tuneAutoMode" in payload and str(payload["tuneAutoMode"]) in {"off", "dim", "hide"}:
+                self.tune_auto_mode = str(payload["tuneAutoMode"])
+            if "tuneAutoThreshold" in payload:
+                self.tune_auto_threshold = clamp(float(payload["tuneAutoThreshold"]), 1.0, 60.0)
+            if "tuneAutoFloor" in payload:
+                self.tune_auto_floor = clamp(float(payload["tuneAutoFloor"]), 0.0, 100.0)
+            if "tuneAutoReleaseMs" in payload:
+                self.tune_auto_release_ms = int(clamp(float(payload["tuneAutoReleaseMs"]), 200.0, 3000.0))
+            if "tuneAutoPlayer" in payload:
+                self.tune_auto_player = coerce_bool(payload["tuneAutoPlayer"])
+            if "tuneAutoQueue" in payload:
+                self.tune_auto_queue = coerce_bool(payload["tuneAutoQueue"])
+            if "tuneAutoDock" in payload:
+                self.tune_auto_dock = coerce_bool(payload["tuneAutoDock"])
             if "threshold" in payload:
                 self.threshold = clamp(float(payload["threshold"]), 1.0, 50.0)
             if "deviceLabel" in payload and str(payload["deviceLabel"]) in self.device_map:
@@ -780,7 +1004,7 @@ class WebRuntime:
                 self.tune_status = tune_validation_error
         if media_changed:
             self.reload_media(show_errors=True)
-        if recalc_guidance or "chatUrl" in payload or "chatStyle" in payload or "bgMode" in payload or "tunePlayerUrl" in payload or "tuneQueueUrl" in payload or "tuneDockUrl" in payload:
+        if recalc_guidance or "chatUrl" in payload or "chatStyle" in payload or "bgMode" in payload or "tunePlayerUrl" in payload or "tuneQueueUrl" in payload or "tuneDockUrl" in payload or "tuneAutoMode" in payload or "tuneAutoThreshold" in payload or "tuneAutoFloor" in payload or "tuneAutoReleaseMs" in payload or "tuneAutoPlayer" in payload or "tuneAutoQueue" in payload or "tuneAutoDock" in payload:
             self.update_guidance()
         if save:
             self.save_settings()
@@ -860,6 +1084,13 @@ class WebRuntime:
                     "tunePlayerUrl": self.tune_player_url,
                     "tuneQueueUrl": self.tune_queue_url,
                     "tuneDockUrl": self.tune_dock_url,
+                    "tuneAutoMode": self.tune_auto_mode,
+                    "tuneAutoThreshold": round(self.tune_auto_threshold, 1),
+                    "tuneAutoFloor": round(self.tune_auto_floor, 1),
+                    "tuneAutoReleaseMs": int(self.tune_auto_release_ms),
+                    "tuneAutoPlayer": self.tune_auto_player,
+                    "tuneAutoQueue": self.tune_auto_queue,
+                    "tuneAutoDock": self.tune_auto_dock,
                     "threshold": round(self.threshold, 1),
                     "imageIdle": self.image_paths["idle"],
                     "imageTalkA": self.image_paths["talk_a"],
@@ -884,6 +1115,7 @@ class WebRuntime:
                 "frameVersion": self.frame_version,
                 "audioLevel": round(self.last_level_value, 1),
                 "heroSignal": self.hero_signal,
+                "monitorRunning": self.monitor.running,
             }
 
     def static_response(self, path: str) -> StaticResponse | None:
@@ -975,21 +1207,21 @@ class WebRequestHandler(BaseHTTPRequestHandler):
 
         if path == "/music/player":
             self._send_bytes(
-                build_tune2live_embed_html("Tune2Live · плеер", self.server.app.tune_player_url).encode("utf-8"),
+                build_tune2live_embed_html("Tune2Live · плеер", self.server.app.tune_player_url, "player").encode("utf-8"),
                 "text/html; charset=utf-8",
             )
             return
 
         if path == "/music/queue":
             self._send_bytes(
-                build_tune2live_embed_html("Tune2Live · очередь", self.server.app.tune_queue_url).encode("utf-8"),
+                build_tune2live_embed_html("Tune2Live · очередь", self.server.app.tune_queue_url, "queue").encode("utf-8"),
                 "text/html; charset=utf-8",
             )
             return
 
         if path == "/music/dock":
             self._send_bytes(
-                build_tune2live_embed_html("Tune2Live · док-панель", self.server.app.tune_dock_url).encode("utf-8"),
+                build_tune2live_embed_html("Tune2Live · док-панель", self.server.app.tune_dock_url, "dock").encode("utf-8"),
                 "text/html; charset=utf-8",
             )
             return
@@ -1095,6 +1327,7 @@ class WebRequestHandler(BaseHTTPRequestHandler):
                         {
                             "audioLevel": level_bucket,
                             "heroSignal": signal,
+                            "monitorRunning": bool(snapshot["monitorRunning"]),
                         },
                     )
 
